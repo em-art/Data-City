@@ -1,0 +1,229 @@
+{
+  "$schema": "../../schemas/enterprise.schema.json",
+  "version": "0.1.0",
+  "name": "Data Platform District — демонстрационная модель",
+  "entities": [
+    {
+      "id": "dom.data",
+      "kind": "domain",
+      "name": "Домен данных",
+      "character": "data",
+      "description": "Платформа данных, склад продуктов, метаданные и доставка через ИСТОК.",
+      "owner": "Команда Data Platform"
+    },
+    {
+      "id": "dom.technical",
+      "kind": "domain",
+      "name": "Технический домен",
+      "character": "technical",
+      "description": "Операционные системы-источники и инженерная инфраструктура.",
+      "owner": "Технический блок"
+    },
+    {
+      "id": "dom.commercial",
+      "kind": "domain",
+      "name": "Коммерческий домен",
+      "character": "commercial",
+      "description": "Потребители продуктов данных: аналитика продаж, маркетинг, отчётность.",
+      "owner": "Коммерческий блок"
+    },
+
+    {
+      "id": "sys.eva",
+      "kind": "system",
+      "name": "EVA",
+      "domainId": "dom.technical",
+      "role": "source",
+      "description": "Операционный центр: учёт абонентов, услуг и заявок. Источник изменений для платформы данных.",
+      "owner": "Команда EVA",
+      "technologies": ["PostgreSQL", "Debezium CDC", "Kafka"],
+      "interfaces": ["api", "stream"],
+      "docs": [{ "title": "Паспорт системы EVA", "url": "#docs/eva" }],
+      "history": [{ "at": "2026-08-12", "author": "Команда EVA", "change": "Включена CDC-выгрузка таблиц абонентов" }]
+    },
+    {
+      "id": "sys.gitlab",
+      "kind": "system",
+      "name": "GitLab",
+      "domainId": "dom.technical",
+      "role": "engineering",
+      "description": "Инженерная мастерская: код пайплайнов, dbt-моделей и контрактов, CI/CD.",
+      "owner": "Платформенная команда",
+      "technologies": ["GitLab CI", "Container Registry"],
+      "interfaces": ["api", "ui"],
+      "docs": [{ "title": "Правила репозиториев DP", "url": "#docs/gitlab" }]
+    },
+    {
+      "id": "sys.data-platform",
+      "kind": "system",
+      "name": "Data Platform",
+      "domainId": "dom.data",
+      "role": "processing",
+      "description": "Фабрика обработки данных: собирает, проверяет и версионирует продукты данных.",
+      "owner": "emp.product-owner",
+      "technologies": ["Dagster", "dbt", "Trino", "Apache Iceberg", "Nessie", "Ceph S3"],
+      "interfaces": ["sql", "api"],
+      "docs": [
+        { "title": "Архитектура Data Platform", "url": "#docs/dp" },
+        { "title": "Стандарт продукта данных", "url": "#docs/dp-standard" }
+      ],
+      "history": [
+        { "at": "2026-06-01", "author": "Команда DP", "change": "Переход каталога на Nessie" },
+        { "at": "2026-09-20", "author": "Команда DP", "change": "Добавлены автоматические проверки качества" }
+      ]
+    },
+    {
+      "id": "sys.product-warehouse",
+      "kind": "system",
+      "name": "Склад продуктов данных",
+      "domainId": "dom.data",
+      "role": "storage",
+      "description": "Хранит опубликованные версии продуктов данных. Каждая версия неизменяема.",
+      "owner": "Команда Data Platform",
+      "technologies": ["Apache Iceberg", "Ceph S3", "Nessie tags"],
+      "interfaces": ["sql"]
+    },
+    {
+      "id": "sys.metadata",
+      "kind": "system",
+      "name": "Каталог метаданных",
+      "domainId": "dom.data",
+      "role": "metadata",
+      "description": "Цифровая карта города: что есть каждый объект, кому принадлежит, откуда данные и кто их использует.",
+      "owner": "Команда Data Governance",
+      "technologies": ["OpenMetadata"],
+      "interfaces": ["api", "ui", "mcp"]
+    },
+    {
+      "id": "sys.nit",
+      "kind": "system",
+      "name": "Нить",
+      "domainId": "dom.data",
+      "role": "context",
+      "description": "Инфраструктура контекста: персональные ноды сотрудников, память, помощники и связи между ними.",
+      "owner": "Команда Нить",
+      "technologies": ["Graph store", "LLM assistants"],
+      "interfaces": ["mcp", "api"]
+    },
+    {
+      "id": "sys.istok",
+      "kind": "system",
+      "name": "ИСТОК",
+      "domainId": "dom.data",
+      "role": "delivery",
+      "description": "Распределительный центр: доставляет продукты данных потребителям по контрактам и правам доступа.",
+      "owner": "Команда ИСТОК",
+      "technologies": ["Trino", "REST Gateway", "Kafka", "MCP server"],
+      "interfaces": ["api", "sql", "stream", "mcp"],
+      "docs": [{ "title": "Как подключиться к ИСТОК", "url": "#docs/istok" }]
+    },
+    {
+      "id": "sys.bi",
+      "kind": "system",
+      "name": "Коммерческая аналитика",
+      "domainId": "dom.commercial",
+      "role": "consumer",
+      "description": "BI-витрины и отчёты коммерческого блока.",
+      "owner": "emp.analyst",
+      "technologies": ["Superset"],
+      "interfaces": ["sql", "ui"]
+    },
+
+    {
+      "id": "emp.data-engineer",
+      "kind": "employee",
+      "name": "Анна — инженер данных",
+      "domainId": "dom.data",
+      "role": "Data Engineer",
+      "skills": ["dbt", "Dagster", "SQL", "Python"],
+      "assistant": { "name": "Помощник DE", "capabilities": ["генерация dbt-тестов", "разбор падений пайплайнов"] },
+      "context": ["Релиз subscriber_base 2.3", "Инцидент: задержка CDC 04.10"]
+    },
+    {
+      "id": "emp.product-owner",
+      "kind": "employee",
+      "name": "Игорь — владелец продукта",
+      "domainId": "dom.data",
+      "role": "Data Product Owner",
+      "skills": ["Управление продуктом", "Контракты данных"],
+      "assistant": { "name": "Помощник PO", "capabilities": ["сводка изменений версии", "проверка контракта"] },
+      "context": ["Согласование публикаций", "Дорожная карта продуктов Q4"]
+    },
+    {
+      "id": "emp.analyst",
+      "kind": "employee",
+      "name": "Мария — аналитик",
+      "domainId": "dom.commercial",
+      "role": "BI Analyst",
+      "skills": ["SQL", "Superset", "Unit-экономика"],
+      "assistant": { "name": "Помощник аналитика", "capabilities": ["поиск продуктов в каталоге"] },
+      "context": ["Отчёт по оттоку абонентов"]
+    },
+
+    {
+      "id": "dp.subscriber-base",
+      "kind": "dataProduct",
+      "name": "Абонентская база",
+      "domainId": "dom.data",
+      "producedBy": "sys.data-platform",
+      "version": "2.3.0",
+      "sources": ["sys.eva"],
+      "quality": { "checks": 42, "passed": 42 },
+      "classification": "confidential",
+      "owner": "emp.product-owner",
+      "description": "Актуальный срез абонентов с услугами и статусами. Обновление ежедневно к 06:00.",
+      "tags": ["golden", "pii-masked"],
+      "history": [
+        { "at": "2026-09-30", "author": "emp.data-engineer", "change": "2.3.0: добавлено поле segment_v2" },
+        { "at": "2026-08-15", "author": "emp.data-engineer", "change": "2.2.0: маскирование ПДн" }
+      ]
+    },
+
+    {
+      "id": "ctr.subscriber-base-bi",
+      "kind": "contract",
+      "name": "Контракт: Абонентская база → Аналитика",
+      "productId": "dp.subscriber-base",
+      "providerId": "sys.istok",
+      "consumerId": "sys.bi",
+      "interface": "sql",
+      "sla": { "freshness": "T+1, до 06:00", "availability": "99.5%" },
+      "schemaVersion": "2.x",
+      "allowedRoute": ["sys.data-platform", "sys.product-warehouse", "sys.istok", "sys.bi"],
+      "owner": "emp.product-owner",
+      "description": "Чтение через SQL-интерфейс ИСТОК, только маскированные поля."
+    },
+
+    { "id": "con.eva-dp", "kind": "connector", "name": "CDC EVA → DP", "fromId": "sys.eva", "toId": "sys.data-platform", "interface": "stream", "technology": "Debezium / Kafka" },
+    { "id": "con.dp-warehouse", "kind": "connector", "name": "Публикация версий", "fromId": "sys.data-platform", "toId": "sys.product-warehouse", "interface": "sql", "technology": "Iceberg commit" },
+    { "id": "con.warehouse-istok", "kind": "connector", "name": "Выдача в ИСТОК", "fromId": "sys.product-warehouse", "toId": "sys.istok", "interface": "sql", "technology": "Trino catalog" },
+    { "id": "con.istok-bi", "kind": "connector", "name": "SQL-доступ аналитики", "fromId": "sys.istok", "toId": "sys.bi", "interface": "sql", "technology": "Trino JDBC" },
+    { "id": "con.gitlab-dp", "kind": "connector", "name": "CI/CD пайплайнов", "fromId": "sys.gitlab", "toId": "sys.data-platform", "interface": "api", "technology": "GitLab CI" },
+    { "id": "con.metadata-istok", "kind": "connector", "name": "Каталог для ИСТОК", "fromId": "sys.metadata", "toId": "sys.istok", "interface": "mcp" },
+
+    {
+      "id": "proc.subscriber-delivery",
+      "kind": "process",
+      "name": "Поставка продукта «Абонентская база»",
+      "domainId": "dom.data",
+      "owner": "emp.product-owner",
+      "description": "Ежедневный цикл: от изменений в EVA до данных в отчётах коммерческой аналитики.",
+      "steps": [
+        { "id": "extract", "name": "Выгрузка изменений (CDC)", "actorId": "sys.eva", "duration": 2 },
+        { "id": "build", "name": "Сборка продукта (dbt + Dagster)", "actorId": "sys.data-platform", "duration": 4 },
+        { "id": "quality", "name": "Проверки качества 42/42", "actorId": "sys.data-platform", "carries": "dp.subscriber-base", "duration": 2 },
+        { "id": "publish", "name": "Публикация версии на склад", "actorId": "sys.product-warehouse", "carries": "dp.subscriber-base", "duration": 2 },
+        { "id": "approve", "name": "Ручное согласование публикации", "actorId": "emp.product-owner", "manual": true, "duration": 6 },
+        { "id": "contract", "name": "Проверка контракта и прав", "actorId": "sys.istok", "carries": "dp.subscriber-base", "duration": 2 },
+        { "id": "deliver", "name": "Доставка потребителю", "actorId": "sys.bi", "duration": 2 }
+      ]
+    },
+
+    { "id": "rel.po-owns-dp", "kind": "relationship", "type": "owns", "fromId": "emp.product-owner", "toId": "dp.subscriber-base" },
+    { "id": "rel.de-works-dp", "kind": "relationship", "type": "worksWith", "fromId": "emp.data-engineer", "toId": "sys.data-platform" },
+    { "id": "rel.analyst-works-bi", "kind": "relationship", "type": "worksWith", "fromId": "emp.analyst", "toId": "sys.bi" },
+    { "id": "rel.metadata-describes-dp", "kind": "relationship", "type": "describes", "fromId": "sys.metadata", "toId": "dp.subscriber-base" },
+    { "id": "rel.de-po-context", "kind": "relationship", "type": "worksWith", "fromId": "emp.data-engineer", "toId": "emp.product-owner", "label": "передаёт контекст релиза" },
+    { "id": "rel.analyst-po-context", "kind": "relationship", "type": "worksWith", "fromId": "emp.analyst", "toId": "emp.product-owner", "label": "запросы на изменения" }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "at": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "demo",
+        "live"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "step.started",
+        "step.completed",
+        "product.produced",
+        "product.dispatched",
+        "contract.checked",
+        "product.delivered",
+        "context.shared",
+        "system.status"
+      ]
+    },
+    "subjectId": {
+      "type": "string",
+      "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+    },
+    "processId": {
+      "type": "string",
+      "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+    },
+    "stepId": {
+      "type": "string"
+    },
+    "payload": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "id",
+    "at",
+    "source",
+    "type",
+    "subjectId"
+  ]
+}

@@ -1,0 +1,907 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "domain"
+              },
+              "character": {
+                "type": "string",
+                "enum": [
+                  "data",
+                  "finance",
+                  "commercial",
+                  "corporate",
+                  "technical"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "character"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "system"
+              },
+              "domainId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "source",
+                  "processing",
+                  "storage",
+                  "delivery",
+                  "consumer",
+                  "engineering",
+                  "operations",
+                  "metadata",
+                  "context"
+                ]
+              },
+              "technologies": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "interfaces": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "api",
+                    "sql",
+                    "stream",
+                    "mcp",
+                    "file",
+                    "ui"
+                  ]
+                }
+              },
+              "status": {
+                "default": "healthy",
+                "type": "string",
+                "enum": [
+                  "healthy",
+                  "degraded",
+                  "down",
+                  "planned"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "domainId",
+              "role"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "employee"
+              },
+              "domainId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "role": {
+                "type": "string"
+              },
+              "skills": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "assistant": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "capabilities": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "context": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "domainId",
+              "role"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "dataProduct"
+              },
+              "domainId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "producedBy": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "version": {
+                "type": "string"
+              },
+              "sources": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                }
+              },
+              "quality": {
+                "default": {
+                  "checks": 0,
+                  "passed": 0
+                },
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "passed": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "checks",
+                  "passed"
+                ]
+              },
+              "classification": {
+                "default": "internal",
+                "type": "string",
+                "enum": [
+                  "public",
+                  "internal",
+                  "confidential",
+                  "restricted"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "domainId",
+              "producedBy",
+              "version"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "contract"
+              },
+              "productId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "providerId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "consumerId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "interface": {
+                "type": "string",
+                "enum": [
+                  "api",
+                  "sql",
+                  "stream",
+                  "mcp",
+                  "file",
+                  "ui"
+                ]
+              },
+              "sla": {
+                "type": "object",
+                "properties": {
+                  "freshness": {
+                    "type": "string"
+                  },
+                  "availability": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "freshness",
+                  "availability"
+                ]
+              },
+              "schemaVersion": {
+                "type": "string"
+              },
+              "allowedRoute": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                }
+              },
+              "status": {
+                "default": "active",
+                "type": "string",
+                "enum": [
+                  "active",
+                  "draft",
+                  "deprecated"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "productId",
+              "providerId",
+              "consumerId",
+              "interface",
+              "sla",
+              "schemaVersion"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "connector"
+              },
+              "fromId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "toId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "interface": {
+                "type": "string",
+                "enum": [
+                  "api",
+                  "sql",
+                  "stream",
+                  "mcp",
+                  "file",
+                  "ui"
+                ]
+              },
+              "technology": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "fromId",
+              "toId",
+              "interface"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "process"
+              },
+              "domainId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "steps": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "actorId": {
+                      "type": "string",
+                      "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                    },
+                    "carries": {
+                      "type": "string",
+                      "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                    },
+                    "manual": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "duration": {
+                      "default": 3,
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "actorId"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "domainId",
+              "steps"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "relationship"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "dependsOn",
+                  "produces",
+                  "consumes",
+                  "owns",
+                  "worksWith",
+                  "delivers",
+                  "describes"
+                ]
+              },
+              "fromId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "toId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "type",
+              "fromId",
+              "toId"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "entities"
+  ]
+}

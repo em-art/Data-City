@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "districts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "domainId": {
+            "type": "string",
+            "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+          },
+          "rect": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "max": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ]
+          },
+          "color": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "domainId",
+          "rect",
+          "color"
+        ]
+      }
+    },
+    "roads": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "at": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "id",
+              "at"
+            ]
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ]
+    },
+    "placements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+          },
+          "archetype": {
+            "type": "string",
+            "enum": [
+              "factory",
+              "warehouse",
+              "distribution",
+              "opsCenter",
+              "workshop",
+              "office",
+              "archive",
+              "tower",
+              "employeeNode"
+            ]
+          },
+          "position": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "rotation": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "footprint": {
+            "default": [
+              6,
+              6
+            ],
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "height": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "port": {
+            "type": "string"
+          },
+          "accent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityId",
+          "archetype",
+          "position"
+        ]
+      }
+    },
+    "props": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tree",
+              "containers",
+              "solar",
+              "tank",
+              "drone"
+            ]
+          },
+          "at": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "rotation": {
+            "default": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "at"
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "districts",
+    "roads",
+    "placements"
+  ]
+}

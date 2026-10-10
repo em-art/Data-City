@@ -1,0 +1,68 @@
+{
+  "$schema": "../../schemas/space.schema.json",
+  "version": "0.1.0",
+  "districts": [
+    { "domainId": "dom.technical", "rect": { "min": [-31, -21], "max": [-11, 13] }, "color": "#dfe6f6" },
+    { "domainId": "dom.data", "rect": { "min": [-9, -21], "max": [21, 26] }, "color": "#e6e3f7" },
+    { "domainId": "dom.commercial", "rect": { "min": [23, 9], "max": [41, 30] }, "color": "#ddefea" }
+  ],
+  "roads": {
+    "nodes": [
+      { "id": "r.w", "at": [-30, 7] },
+      { "id": "r.eva", "at": [-19, 7] },
+      { "id": "r.x1", "at": [-10, 7] },
+      { "id": "r.dp", "at": [-2, 7] },
+      { "id": "r.x2", "at": [8, 7] },
+      { "id": "r.wh", "at": [15, 7] },
+      { "id": "r.x3", "at": [22, 7] },
+      { "id": "r.e", "at": [40, 7] },
+
+      { "id": "t.w", "at": [-30, -7] },
+      { "id": "t.git", "at": [-19, -7] },
+      { "id": "t.x1", "at": [-10, -7] },
+      { "id": "t.meta", "at": [-2, -7] },
+      { "id": "t.x2", "at": [8, -7] },
+      { "id": "t.nit", "at": [15, -7] },
+      { "id": "t.x3", "at": [22, -7] },
+
+      { "id": "v.istok", "at": [22, 16] },
+      { "id": "v.bi", "at": [22, 21] },
+      { "id": "b.e", "at": [22, 28] },
+      { "id": "b.w", "at": [-10, 28] }
+    ],
+    "edges": [
+      ["r.w", "r.eva"], ["r.eva", "r.x1"], ["r.x1", "r.dp"], ["r.dp", "r.x2"], ["r.x2", "r.wh"], ["r.wh", "r.x3"], ["r.x3", "r.e"],
+      ["t.w", "t.git"], ["t.git", "t.x1"], ["t.x1", "t.meta"], ["t.meta", "t.x2"], ["t.x2", "t.nit"], ["t.nit", "t.x3"],
+      ["t.x1", "r.x1"], ["t.x2", "r.x2"], ["t.x3", "r.x3"],
+      ["r.x3", "v.istok"], ["v.istok", "v.bi"], ["v.bi", "b.e"],
+      ["r.x1", "b.w"], ["b.w", "b.e"]
+    ]
+  },
+  "placements": [
+    { "entityId": "sys.eva", "archetype": "opsCenter", "position": [-19, -0.5], "footprint": [10, 8], "port": "r.eva" },
+    { "entityId": "sys.gitlab", "archetype": "workshop", "position": [-19, -14], "footprint": [9, 6], "port": "t.git" },
+    { "entityId": "sys.data-platform", "archetype": "factory", "position": [-2, -0.5], "footprint": [12, 8], "port": "r.dp" },
+    { "entityId": "sys.product-warehouse", "archetype": "warehouse", "position": [15, 0], "footprint": [9, 6], "port": "r.wh" },
+    { "entityId": "sys.metadata", "archetype": "archive", "position": [-2, -13.5], "footprint": [9, 6], "port": "t.meta" },
+    { "entityId": "sys.nit", "archetype": "tower", "position": [15, -13.5], "footprint": [6, 6], "port": "t.nit" },
+    { "entityId": "sys.istok", "archetype": "distribution", "position": [12.5, 16], "footprint": [12, 8], "rotation": 1, "port": "v.istok" },
+    { "entityId": "sys.bi", "archetype": "office", "position": [30.5, 21], "footprint": [8, 6], "rotation": 3, "port": "v.bi" },
+
+    { "entityId": "emp.data-engineer", "archetype": "employeeNode", "position": [5.6, -3.2], "footprint": [1.6, 1.6] },
+    { "entityId": "emp.product-owner", "archetype": "employeeNode", "position": [8.5, -10.5], "footprint": [1.6, 1.6] },
+    { "entityId": "emp.analyst", "archetype": "employeeNode", "position": [25.5, 13], "footprint": [1.6, 1.6] }
+  ],
+  "props": [
+    { "type": "tree", "at": [-29, -18] }, { "type": "tree", "at": [-27, -19] }, { "type": "tree", "at": [-12.5, -18] },
+    { "type": "tree", "at": [-29, 11] }, { "type": "tree", "at": [-13, 11] }, { "type": "tree", "at": [-7, 11] },
+    { "type": "tree", "at": [3, 11] }, { "type": "tree", "at": [5, 11.5] }, { "type": "tree", "at": [-7, 24] },
+    { "type": "tree", "at": [1, 24] }, { "type": "tree", "at": [19, 24] }, { "type": "tree", "at": [25, 26] },
+    { "type": "tree", "at": [38, 26] }, { "type": "tree", "at": [38, 12] }, { "type": "tree", "at": [19.5, -19] },
+    { "type": "tree", "at": [7, -19] }, { "type": "tree", "at": [-6.5, -19] }, { "type": "tree", "at": [24.5, 12] },
+    { "type": "containers", "at": [19.5, 4.2] }, { "type": "containers", "at": [4, 19.5], "rotation": 1.57 },
+    { "type": "containers", "at": [4, 14], "rotation": 1.57 }, { "type": "containers", "at": [-12.5, 3] },
+    { "type": "tank", "at": [-27, -2] }, { "type": "tank", "at": [-27, 1] },
+    { "type": "solar", "at": [-6, 18] }, { "type": "solar", "at": [-1, 18] },
+    { "type": "drone", "at": [19, 13] }
+  ]
+}
