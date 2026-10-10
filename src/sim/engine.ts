@@ -26,6 +26,11 @@ export interface Phase {
   cargoId?: string;
   /** For travel: the delivery leaves the contract's allowed route. */
   routeViolation?: boolean;
+  /** For travel: copied by truck, or read in place (federated, Pattern A). */
+  transport?: 'truck' | 'pipe';
+  /** Systems taking part in a work step without the cargo moving there. */
+  via?: string[];
+  flow?: string;
 }
 
 export interface Run {
@@ -89,14 +94,14 @@ export function compileProcess(process: ProcessT, ctx: SimContext, opts: Compile
   for (const step of process.steps) {
     const actor = ctx.index.get(step.actorId);
     const actorPort = portOf(ctx, step.actorId);
-    const isPlace = actor?.kind === 'system' && !!actorPort;
+    const isPlace = !!actorPort && actor?.kind !== 'employee';
 
     if (isPlace && here && here !== step.actorId) {
       const from = portOf(ctx, here)!;
       const path = shortestPath(ctx.graph, from, actorPort) ?? [];
       const dur = Math.max(pathLength(path) / speed, 0.5);
       const routeViolation = !!contract && !contract.allowedRoute.includes(step.actorId);
-      phases.push({ kind: 'travel', t0: t, t1: t + dur, actorId: here, toId: step.actorId, path, cargoId: cargo, routeViolation });
+      phases.push({ kind: 'travel', t0: t, t1: t + dur, actorId: here, toId: step.actorId, path, cargoId: cargo, routeViolation, transport: step.transport });
       emit(t, 'product.dispatched', cargo ?? here, { payload: { fromId: here, toId: step.actorId, routeViolation } });
       t += dur;
     }
@@ -110,6 +115,8 @@ export function compileProcess(process: ProcessT, ctx: SimContext, opts: Compile
       stepId: step.id,
       actorId: step.actorId,
       cargoId: cargo,
+      via: step.via,
+      flow: step.flow,
     });
     t += step.duration;
     emit(t, 'step.completed', step.actorId, { stepId: step.id });
@@ -117,7 +124,7 @@ export function compileProcess(process: ProcessT, ctx: SimContext, opts: Compile
     if (step.carries) {
       if (step.carries !== cargo && ctx.index.get(step.carries)?.kind === 'dataProduct') {
         emit(t, 'product.produced', step.carries, { stepId: step.id });
-        contract = contractFor(ctx, step.carries);
+        contract = contractFor(ctx, step.carries) ?? contract;
       }
       cargo = step.carries;
     }
@@ -157,7 +164,7 @@ export function compileTrip(
 export interface RunSample {
   phase: Phase | undefined;
   /** Vehicle pose; null when the run has not started or has finished. */
-  vehicle: { at: Vec2T; heading: number; moving: boolean; cargoId?: string } | null;
+  vehicle: { at: Vec2T; heading: number; moving: boolean; cargoId?: string; pipe?: boolean } | null;
   progress: number; // 0..1 over the whole run
 }
 
@@ -171,7 +178,7 @@ export function sampleRun(run: Run, t: number, ctx: SimContext): RunSample {
   if (phase.kind === 'travel' && phase.path) {
     const u = (t - phase.t0) / Math.max(phase.t1 - phase.t0, 1e-6);
     const s = samplePath(phase.path, u);
-    return { phase, vehicle: { ...s, moving: true, cargoId: phase.cargoId }, progress };
+    return { phase, vehicle: { ...s, moving: true, cargoId: phase.cargoId, pipe: phase.transport === 'pipe' }, progress };
   }
   // Parked: at the last place-like object (the vehicle waits during manual steps).
   let parkedAt: string | undefined;

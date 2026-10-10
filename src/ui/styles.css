@@ -84,7 +84,7 @@ input, select { font: inherit; color: inherit; }
 .label { background: rgba(255,255,255,0.92); border: 1px solid rgba(120,130,170,0.2); padding: 3px 9px; border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(60,70,120,0.12); display: flex; align-items: center; gap: 5px; user-select: none; transition: opacity .2s; }
 .label--person { font-weight: 500; font-size: 10px; border-color: rgba(163, 94, 232, 0.35); }
 .label--dim { opacity: 0.35; }
-.label-wrap { transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 4px; transition: opacity .2s; }
+.label-wrap { position: relative; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 4px; transition: opacity .2s; }
 .lx { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .lx__product { background: rgba(255,255,255,0.96); border: 1.5px solid var(--accent); color: var(--accent); padding: 2px 7px; border-radius: 7px; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .lx--meta { background: rgba(255,255,255,0.96); border-left: 3px solid var(--teal); border-radius: 6px; padding: 3px 8px; font-size: 10px; white-space: nowrap; box-shadow: 0 2px 8px rgba(60,70,120,.12); align-items: flex-start; gap: 1px; }
@@ -272,3 +272,18 @@ input, select { font: inherit; color: inherit; }
   .bottom { left: 16px; right: 16px; grid-template-columns: 1fr; }
   .bottom > :nth-child(n + 2) { display: none; }
 }
+
+/* ---------- data platform additions ---------- */
+.proc-select { border: 1px solid var(--line); border-radius: 9px; padding: 4px 8px; background: #fff; font-weight: 700; font-size: 12px; min-width: 0; flex: 1; max-width: 70%; text-overflow: ellipsis; }
+.flow { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-right: 5px; text-transform: uppercase; }
+.flow--git { background: #ffe9db; color: #c25d12; }
+.flow--nessie { background: #f2e6fd; color: #8a45c9; }
+.flow--release { background: #e0f5f2; color: var(--teal); }
+.check { display: flex; flex-direction: column; gap: 2px; padding: 6px 9px; border-radius: 9px; font-size: 11px; font-weight: 600; }
+.check small { font-weight: 400; line-height: 1.35; }
+.check--ok { background: #e7f7ea; color: #2b8a3e; }
+.check--bad { background: #ffe6e9; color: #b42a3a; }
+.layer-chip { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.code-inline { font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3fa; padding: 1px 5px; border-radius: 5px; }
+.lx--side { position: absolute; left: calc(100% + 6px); bottom: 0; align-items: flex-start; }
+.lx--side .lx__product { font-size: 9.5px; padding: 1px 6px; }

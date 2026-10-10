@@ -137,7 +137,17 @@
               "office",
               "archive",
               "tower",
-              "employeeNode"
+              "employeeNode",
+              "layerHall",
+              "queryHub",
+              "controlTower",
+              "silos",
+              "switchyard",
+              "ingestDock",
+              "lab",
+              "gatehouse",
+              "vault",
+              "watchtower"
             ]
           },
           "position": {

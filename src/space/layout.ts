@@ -17,6 +17,16 @@ export const DEFAULT_FOOTPRINT: Record<ArchetypeT, Vec2T> = {
   archive: [7, 5],
   tower: [5, 5],
   employeeNode: [1.6, 1.6],
+  layerHall: [8, 7],
+  queryHub: [9, 8],
+  controlTower: [6, 6],
+  silos: [10, 7],
+  switchyard: [8, 6],
+  ingestDock: [8, 6],
+  lab: [7, 6],
+  gatehouse: [3, 3],
+  vault: [5, 5],
+  watchtower: [4, 4],
 };
 
 interface Rect {

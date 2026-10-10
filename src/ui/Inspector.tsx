@@ -4,6 +4,8 @@ import type { ModelIndex } from '@/model/graph';
 import type { EntityT } from '@/model/schema';
 import { clock } from '@/sim/clock';
 import { sampleRun, type Run } from '@/sim/engine';
+import { checkProductNaming } from '@/model/naming';
+import { LAYER_COLOR } from '@/scene/archetypesDp';
 import { useCity } from '@/store/city';
 import { EVENT_LABEL, KIND_LABEL, ROLE_LABEL, useTick } from './util';
 
@@ -159,7 +161,27 @@ function EntityBody({ e, index }: { e: EntityT; index: ModelIndex }) {
             <Row k="Интерфейсы">
               <Chips items={e.interfaces.map((i) => i.toUpperCase())} />
             </Row>
+            {e.repos.length > 0 && (
+              <Row k="Репозитории">
+                <Chips items={e.repos} />
+              </Row>
+            )}
           </Section>
+          {(e.contour || e.hostGroup) && (
+            <Section title="Размещение">
+              {e.contour && <Row k="Контур">{e.contour === 'test' ? 'test' : 'prod'}</Row>}
+              {e.hostGroup && <Row k="Группа хостов">{e.hostGroup}</Row>}
+              <div className="muted">Имена ВМ и адреса — в приватном инвентаре, в модель не попадают.</div>
+            </Section>
+          )}
+          {e.role === 'source' && (
+            <Section title="Подключение источника">
+              <Row k="Код в реестре">{e.sourceCode ? <span className="code-inline">{e.sourceCode}</span> : '—'}</Row>
+              <Row k="Паттерн">
+                {e.loadPattern === 'A' ? 'A — федеративный (Trino-каталог, данные на месте)' : e.loadPattern === 'B' ? 'B — ingestion через dlt в Landing' : '—'}
+              </Row>
+            </Section>
+          )}
           <Section title="Контракты и зависимости">
             <Dependencies id={e.id} index={index} />
           </Section>
@@ -206,10 +228,23 @@ function EntityBody({ e, index }: { e: EntityT; index: ModelIndex }) {
       );
     case 'dataProduct': {
       const q = e.quality;
+      const layer = e.layerId ? index.get(e.layerId) : undefined;
+      const naming = checkProductNaming(e, index);
       return (
         <>
           <Section title="Продукт">
-            <Row k="Версия">v{e.version}</Row>
+            {e.technicalName && (
+              <Row k="Имя модели">
+                <span className="code-inline">{e.technicalName}</span>
+              </Row>
+            )}
+            {layer?.kind === 'layer' && (
+              <Row k="Слой">
+                <span className="layer-chip" style={{ background: LAYER_COLOR[layer.layer] }} />
+                <Ref id={layer.id} />
+              </Row>
+            )}
+            <Row k="Версия">{e.version === '—' ? '—' : `v${e.version}`}</Row>
             <Row k="Владелец">
               <Owner owner={e.owner} />
             </Row>
@@ -227,6 +262,32 @@ function EntityBody({ e, index }: { e: EntityT; index: ModelIndex }) {
                 <div style={{ width: `${q.checks ? (q.passed / q.checks) * 100 : 0}%` }} />
               </div>
               {q.passed}/{q.checks}
+            </Row>
+          </Section>
+          {e.technicalName && (
+            <Section title="Стандарт именования">
+              {naming.length === 0 ? (
+                <div className="check check--ok">✓ Имя соответствует слою и реестрам</div>
+              ) : (
+                naming.map((n) => (
+                  <div key={n.rule} className="check check--bad">
+                    ✗ {n.message}
+                  </div>
+                ))
+              )}
+            </Section>
+          )}
+          <Section title="Lineage">
+            <Row k="Источники">
+              {e.sources.map((x) => (
+                <Ref key={x} id={x} />
+              ))}
+            </Row>
+            <Row k="Потребляют">
+              {index
+                .all('dataProduct')
+                .filter((p) => p.sources.includes(e.id))
+                .map((p) => <Ref key={p.id} id={p.id} />)}
             </Row>
           </Section>
           <Section title="Контракты и потребители">
@@ -268,6 +329,55 @@ function EntityBody({ e, index }: { e: EntityT; index: ModelIndex }) {
           </Section>
         </>
       );
+    case 'layer':
+      return (
+        <>
+          <Section title="Физика слоя">
+            <Row k="Trino-каталог">
+              <span className="code-inline">{e.catalog}</span>
+            </Row>
+            <Row k="Nessie ref">
+              <span className="code-inline">{e.nessieRef}</span>
+            </Row>
+            <Row k="Бакет">
+              <span className="code-inline">{e.bucket}</span>
+            </Row>
+            <Row k="Префиксы">{e.prefixes.length ? <Chips items={e.prefixes} /> : '—'}</Row>
+            <Row k="Репозиторий">{e.repo ?? '—'}</Row>
+            <Row k="Хранение">{e.storedIn ? <Ref id={e.storedIn} /> : '—'}</Row>
+            <Row k="Обработка">
+              {e.processedBy.map((x) => (
+                <Ref key={x} id={x} />
+              ))}
+            </Row>
+          </Section>
+          <Section title="Что делаем">
+            {e.does.map((x) => (
+              <div key={x} className="check check--ok">
+                ✓ {x}
+              </div>
+            ))}
+          </Section>
+          <Section title="Чего не делаем">
+            {e.doesNot.map((x) => (
+              <div key={x} className="check check--bad">
+                ✗ {x}
+              </div>
+            ))}
+          </Section>
+          <Section title="Продукты слоя">
+            {index
+              .all('dataProduct')
+              .filter((p) => p.layerId === e.id)
+              .map((p) => (
+                <div key={p.id} className="dep">
+                  <Ref id={p.id} />
+                  {p.technicalName && <span className="code-inline">{p.technicalName}</span>}
+                </div>
+              ))}
+          </Section>
+        </>
+      );
     case 'domain':
       return (
         <Section title="Состав района">
@@ -298,6 +408,13 @@ function EntityBody({ e, index }: { e: EntityT; index: ModelIndex }) {
             {e.steps.map((s) => (
               <li key={s.id} className={s.manual ? 'manual' : ''}>
                 {s.name} — <Ref id={s.actorId} />
+                {s.via.length > 0 && (
+                  <small className="muted">
+                    {' '}
+                    через {s.via.map((v) => index.nameOf(v)).join(', ')}
+                  </small>
+                )}
+                {s.transport === 'pipe' && <small className="muted"> · федеративно, без копии</small>}
               </li>
             ))}
           </ol>

@@ -86,6 +86,10 @@
                 "type": "string",
                 "const": "domain"
               },
+              "code": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+$"
+              },
               "character": {
                 "type": "string",
                 "enum": [
@@ -190,7 +194,14 @@
                   "engineering",
                   "operations",
                   "metadata",
-                  "context"
+                  "context",
+                  "orchestration",
+                  "versioning",
+                  "ingestion",
+                  "gateway",
+                  "secrets",
+                  "observability",
+                  "workspace"
                 ]
               },
               "technologies": {
@@ -223,6 +234,34 @@
                   "degraded",
                   "down",
                   "planned"
+                ]
+              },
+              "contour": {
+                "type": "string",
+                "enum": [
+                  "prod",
+                  "test"
+                ]
+              },
+              "hostGroup": {
+                "type": "string"
+              },
+              "repos": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sourceCode": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+$"
+              },
+              "loadPattern": {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B"
                 ]
               }
             },
@@ -422,6 +461,148 @@
               },
               "kind": {
                 "type": "string",
+                "const": "layer"
+              },
+              "domainId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "layer": {
+                "type": "string",
+                "enum": [
+                  "landing",
+                  "bronze",
+                  "silver",
+                  "gold",
+                  "sandbox"
+                ]
+              },
+              "catalog": {
+                "type": "string"
+              },
+              "nessieRef": {
+                "type": "string"
+              },
+              "bucket": {
+                "type": "string"
+              },
+              "prefixes": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "repo": {
+                "type": "string"
+              },
+              "storedIn": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "processedBy": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                }
+              },
+              "does": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "doesNot": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "domainId",
+              "layer",
+              "catalog",
+              "nessieRef",
+              "bucket"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "docs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ]
+                }
+              },
+              "history": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "author",
+                    "change"
+                  ]
+                }
+              },
+              "kind": {
+                "type": "string",
                 "const": "dataProduct"
               },
               "domainId": {
@@ -434,6 +615,13 @@
               },
               "version": {
                 "type": "string"
+              },
+              "technicalName": {
+                "type": "string"
+              },
+              "layerId": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
               },
               "sources": {
                 "default": [],
@@ -806,6 +994,15 @@
                 "type": "string",
                 "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
               },
+              "category": {
+                "default": "delivery",
+                "type": "string",
+                "enum": [
+                  "delivery",
+                  "ingestion",
+                  "change"
+                ]
+              },
               "steps": {
                 "minItems": 1,
                 "type": "array",
@@ -834,6 +1031,34 @@
                       "default": 3,
                       "type": "number",
                       "exclusiveMinimum": 0
+                    },
+                    "via": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+                      }
+                    },
+                    "transport": {
+                      "default": "truck",
+                      "type": "string",
+                      "enum": [
+                        "truck",
+                        "pipe"
+                      ]
+                    },
+                    "flow": {
+                      "type": "string",
+                      "enum": [
+                        "git",
+                        "nessie",
+                        "release",
+                        "data"
+                      ]
+                    },
+                    "automation": {
+                      "type": "string"
                     }
                   },
                   "required": [

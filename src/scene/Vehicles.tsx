@@ -7,6 +7,7 @@ import { sampleRun, type Run } from '@/sim/engine';
 import { pathLength, samplePath } from '@/space/routing';
 import type { Vec2T } from '@/space/schema';
 import { useCity } from '@/store/city';
+import { LAYER_COLOR } from './archetypesDp';
 import { C } from './look';
 
 const LANE = 0.6;
@@ -74,13 +75,23 @@ function RunTruck({ run }: { run: Run }) {
     heading.current = lerpAngle(heading.current, h, Math.min(dt * 10, 1));
     const ox = -Math.cos(heading.current) * LANE;
     const oz = Math.sin(heading.current) * LANE;
-    g.current.position.set(s.vehicle.at[0] + ox, 0.08, s.vehicle.at[1] + oz);
+    const pipe = !!s.vehicle.pipe;
+    g.current.position.set(s.vehicle.at[0] + (pipe ? 0 : ox), 0.08, s.vehicle.at[1] + (pipe ? 0 : oz));
     g.current.rotation.y = heading.current;
+    const truck = g.current.getObjectByName('truck');
+    const orb = g.current.getObjectByName('pipe');
+    if (truck) truck.visible = !pipe;
+    if (orb) {
+      orb.visible = pipe;
+      orb.position.y = 0.9 + 0.15 * Math.sin(clock.t * 8);
+    }
     const box = g.current.getObjectByName('container') as THREE.Mesh | undefined;
     if (box) {
       const m = box.material as THREE.MeshStandardMaterial;
-      const hasCargo = !!s.vehicle.cargoId && index.get(s.vehicle.cargoId)?.kind === 'dataProduct';
-      m.color.set(violation ? C.red : hasCargo ? (run.source === 'live' ? '#4fb3a9' : C.accent) : C.wallShade);
+      const cargo = s.vehicle.cargoId ? index.get(s.vehicle.cargoId) : undefined;
+      const layer = cargo?.kind === 'dataProduct' && cargo.layerId ? index.get(cargo.layerId) : undefined;
+      const layerColor = layer?.kind === 'layer' ? LAYER_COLOR[layer.layer] : undefined;
+      m.color.set(violation ? C.red : run.source === 'live' && cargo ? '#4fb3a9' : (layerColor ?? (cargo ? C.accent : C.wallShade)));
     }
   });
 
@@ -96,7 +107,20 @@ function RunTruck({ run }: { run: Run }) {
       onPointerOver={() => (document.body.style.cursor = 'pointer')}
       onPointerOut={() => (document.body.style.cursor = '')}
     >
-      <TruckBody cargo={cargoIds.length ? C.accent : C.wallShade} />
+      <group name="truck">
+        <TruckBody cargo={cargoIds.length ? C.accent : C.wallShade} />
+      </group>
+      {/* Pattern A: data is read in place — a pulse travels, nothing is copied */}
+      <group name="pipe" visible={false}>
+        <mesh>
+          <sphereGeometry args={[0.45, 20, 20]} />
+          <meshStandardMaterial color={C.accent} emissive={C.accent} emissiveIntensity={1.2} transparent opacity={0.85} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.75, 0.05, 8, 32]} />
+          <meshStandardMaterial color={C.accent} emissive={C.accent} emissiveIntensity={0.8} />
+        </mesh>
+      </group>
       {selected && (
         <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.5, 1.75, 40]} />
@@ -146,9 +170,9 @@ function AmbientCar({ loop, offset, color }: { loop: Vec2T[]; offset: number; co
 }
 
 const LOOPS: string[][] = [
-  ['b.w', 'b.e', 'v.bi', 'v.istok', 'r.x3', 'r.x2', 'r.dp', 'r.x1', 'b.w'],
-  ['t.x1', 't.meta', 't.x2', 't.nit', 't.x3', 'r.x3', 'r.wh', 'r.x2', 'r.dp', 'r.x1', 't.x1'],
-  ['r.w', 'r.eva', 'r.x1', 't.x1', 't.git', 't.w', 't.git', 't.x1', 'r.x1', 'r.eva', 'r.w'],
+  ['s.wj', 's.ej', 'e.bi', 'e.istok', 'm.ej', 'm.gold', 'm.silver', 'm.mid', 'm.bronze', 'm.landing', 'm.wj', 's.wj'],
+  ['n.wj', 'n.trino', 'n.mid', 'n.ceph', 'n.nessie', 'n.ej', 'm.ej', 'm.gold', 'm.silver', 'm.mid', 'n.mid', 'n.trino', 'n.wj'],
+  ['m.w', 'm.eva', 'm.api', 'm.wj', 'n.wj', 'n.git', 'n.w', 'm.w'],
 ];
 
 export function Vehicles() {

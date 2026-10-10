@@ -23,7 +23,7 @@ describe('enterprise model', () => {
     const ix = indexModel(loadDemoModel());
     const space = loadDemoSpace();
     for (const p of space.placements) expect(ix.get(p.entityId), p.entityId).toBeDefined();
-    for (const s of ix.all('system')) {
+    for (const s of [...ix.all('system'), ...ix.all('layer')]) {
       expect(space.placements.some((p) => p.entityId === s.id), s.id).toBe(true);
     }
   });
@@ -31,13 +31,13 @@ describe('enterprise model', () => {
   it('neighbours include both directions', () => {
     const ix = indexModel(loadDemoModel());
     const ids = ix.neighbours('sys.istok').map((e) => e.id);
-    expect(ids).toContain('con.warehouse-istok');
-    expect(ids).toContain('ctr.subscriber-base-bi');
+    expect(ids).toContain('con.trino-istok');
+    expect(ids).toContain('ctr.corpgov-transitions');
   });
 
   it('exports Mermaid from the same model', () => {
     const m = loadDemoModel();
     expect(toMermaidFlowchart(m)).toContain('sys_istok -- "sql" --> sys_bi');
-    expect(toMermaidSequence(m, 'proc.subscriber-delivery')).toContain('participant sys_eva as EVA');
+    expect(toMermaidSequence(m, 'proc.pattern-a')).toContain('participant sys_eva as EVA');
   });
 });

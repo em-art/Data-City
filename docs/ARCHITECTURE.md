@@ -37,17 +37,28 @@ flowchart TB
 | Сущность | Ключевые поля | В городе |
 | --- | --- | --- |
 | `Domain` | `character` | район |
-| `System` | `domainId`, `role`, `technologies`, `interfaces`, `status` | здание; архетип по роли |
+| `System` | `domainId`, `role`, `technologies`, `interfaces`, `contour`, `hostGroup`, `repos`, `sourceCode`, `loadPattern` | здание; архетип по роли |
 | `EmployeeNode` | `role`, `skills`, `assistant`, `context` | нода с помощником |
-| `DataProduct` | `producedBy`, `version`, `sources`, `quality`, `classification` | груз в контейнере |
+| `DataLayer` | `layer`, `catalog`, `nessieRef`, `bucket`, `prefixes`, `repo`, `does/doesNot` | цех слоя Medallion |
+| `DataProduct` | `producedBy`, `layerId`, `technicalName`, `version`, `sources`, `quality` | груз; цвет контейнера — по слою |
 | `Contract` | `productId`, `providerId`, `consumerId`, `interface`, `sla`, `allowedRoute` | разрешённый маршрут, проверка в ИСТОК |
 | `Connector` | `fromId`, `toId`, `interface`, `technology` | связь (режим «Системы»/«Данные») |
-| `Process` | `steps[]: actorId, carries, manual, duration` | маршрут задачи |
+| `Process` | `category`, `steps[]: actorId, via, carries, transport (truck/pipe), flow, manual, automation` | маршрут задачи |
 | `Event` | `type`, `subjectId`, `source: demo \| live` | движение, статусы, журнал |
 | `Relationship` | `type`, `fromId`, `toId` | связи людей, владение, «описывает» |
 
 Идентификаторы — `kind.slug` (`sys.istok`, `dp.subscriber-base`). Они стабильны: визуальное представление,
 положение, архетип можно менять, не трогая ссылки и историю.
+
+## Стандарты платформы как код
+
+`src/model/naming.ts` превращает соглашения в проверки: префикс слоя, коды источника и домена из реестра (модели),
+запрет кириллицы, Landing только для Pattern B, Bronze 1:1. `processChecks` для процессов категории `change`
+проверяет прохождение Git Flow, Nessie Flow и релизного цикла. Результаты видны в инспекторе, редакторе и
+режиме «Улучшения»; при переносе модели в CI те же функции смогут блокировать MR.
+
+Инфраструктурные детали (имена ВМ, адреса, DNS) в модель не входят: у системы есть только `contour` и
+логическая `hostGroup`. Репозиторий публичный — конкретика остаётся в приватном инвентаре.
 
 ## Пространственная модель
 

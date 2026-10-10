@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import { loadDemoModel, loadDemoSpace } from '@/data';
 import { indexModel, validateModel, type ModelIndex } from '@/model/graph';
 import type { EnterpriseModelT, EntityT, ModelEventT, ProcessT } from '@/model/schema';
-import { automateManualSteps } from '@/sim/analysis';
+import { proposalFor } from '@/sim/analysis';
 import { clock } from '@/sim/clock';
 import { compileProcess, compileTrip, type Run, type SimContext } from '@/sim/engine';
 import { buildRoadGraph } from '@/space/routing';
@@ -16,8 +16,8 @@ import { SpaceModel, type SpaceModelT } from '@/space/schema';
 export type ViewMode = 'city' | 'systems' | 'data' | 'people' | 'process' | 'metadata' | 'improve';
 export type Variant = 'asIs' | 'toBe';
 
-const STORAGE_KEY = 'data-city:workspace:v1';
-export const DEFAULT_PROCESS = 'proc.subscriber-delivery';
+const STORAGE_KEY = 'data-city:workspace:v2';
+export const DEFAULT_PROCESS = 'proc.pattern-a';
 const MAX_LOG = 120;
 
 interface Workspace {
@@ -56,7 +56,8 @@ function derive(w: Workspace): { index: ModelIndex; ctx: SimContext } {
 function resolveProcess(index: ModelIndex, processId: string, variant: Variant): ProcessT | undefined {
   const p = index.get(processId);
   if (p?.kind !== 'process') return undefined;
-  return variant === 'toBe' ? automateManualSteps().apply(p) : p;
+  const proposal = variant === 'toBe' ? proposalFor(p) : null;
+  return proposal ? proposal.apply(p) : p;
 }
 
 export interface LogEntry extends ModelEventT {
@@ -95,6 +96,7 @@ export interface CityState extends Workspace {
   setPlaying(p: boolean): void;
   setRate(r: number): void;
   setVariant(v: Variant): void;
+  setProcess(id: string): void;
   setSource(s: 'demo' | 'live'): void;
   setLiveStatus(s: CityState['liveStatus']): void;
   setDialog(d: CityState['dialog']): void;
@@ -146,6 +148,8 @@ export const useCity = create<CityState>((set, get) => {
     hover: (hoveredId) => set({ hoveredId }),
     setPlaying: (playing) => set({ playing }),
     setRate: (rate) => set({ rate }),
+    setProcess: (processId) =>
+      set((s) => ({ processId, variant: 'asIs', runs: [], process: resolveProcess(s.index, processId, 'asIs') })),
     setVariant: (variant) => set((s) => ({ variant, runs: [], process: resolveProcess(s.index, s.processId, variant) })),
     setSource: (source) => set({ source, runs: [], liveStatus: source === 'live' ? 'connecting' : 'off' }),
     setLiveStatus: (liveStatus) => set({ liveStatus }),

@@ -1,9 +1,11 @@
 import { ArrowRight, CircleCheck, Hand, RefreshCcw } from 'lucide-react';
 import { useMemo } from 'react';
 import type { ModelIndex } from '@/model/graph';
-import { automateManualSteps, compare, findIssues, metricsOf } from '@/sim/analysis';
+import { checkModelNaming } from '@/model/naming';
+import { compare, findIssues, metricsOf, processChecks, proposalFor } from '@/sim/analysis';
 import { activity, clock } from '@/sim/clock';
 import { compileProcess, sampleRun } from '@/sim/engine';
+import { LAYER_COLOR } from '@/scene/archetypesDp';
 import { useCity } from '@/store/city';
 import { EVENT_LABEL, ROLE_LABEL, fmtSec, useTick } from './util';
 
@@ -56,42 +58,59 @@ export function DeliveriesPanel() {
 export function ProcessPanel() {
   useTick(4);
   const process = useCity((s) => s.process);
+  const processId = useCity((s) => s.processId);
+  const index = useCity((s) => s.index);
   const runs = useCity((s) => s.runs);
   const ctx = useCity((s) => s.ctx);
   const variant = useCity((s) => s.variant);
-  const setVariant = useCity((s) => s.setVariant);
-  const select = useCity((s) => s.select);
+  const { setVariant, setProcess, select } = useCity.getState();
+  const base = index.get(processId);
+  const canImprove = base?.kind === 'process' && !!proposalFor(base);
   const metrics = useMemo(() => (process ? metricsOf(compileProcess(process, ctx, { runId: 'm' })) : null), [process, ctx]);
   if (!process || !metrics) return null;
   const latest = [...runs].reverse().find((r) => r.processId === process.id && clock.t <= r.endAt);
   const cur = latest ? sampleRun(latest, clock.t, ctx).phase : undefined;
-  const curIdx = cur?.stepId ? process.steps.findIndex((s) => s.id === cur.stepId) : -1;
-  const doneIdx = cur?.kind === 'travel' ? process.steps.findIndex((s) => s.actorId === cur.toId) - 1 : curIdx - 1;
+  const done = new Set(latest?.phases.filter((p) => p.stepId && p.t1 <= clock.t).map((p) => p.stepId));
   return (
     <section className="panel glass">
       <header>
-        <h3>
-          <button className="linklike" onClick={() => select(process.id)}>
-            {process.name}
+        <select className="proc-select" value={processId} onChange={(e) => setProcess(e.target.value)} title="Процесс для симуляции">
+          {index.all('process').map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        {canImprove ? (
+          <div className="seg">
+            <button className={variant === 'asIs' ? 'on' : ''} onClick={() => setVariant('asIs')}>
+              Как есть
+            </button>
+            <button className={variant === 'toBe' ? 'on' : ''} onClick={() => setVariant('toBe')}>
+              Как будет
+            </button>
+          </div>
+        ) : (
+          <button className="linklike muted" onClick={() => select(process.id)}>
+            подробнее
           </button>
-        </h3>
-        <div className="seg">
-          <button className={variant === 'asIs' ? 'on' : ''} onClick={() => setVariant('asIs')}>
-            Как есть
-          </button>
-          <button className={variant === 'toBe' ? 'on' : ''} onClick={() => setVariant('toBe')}>
-            Как будет
-          </button>
-        </div>
+        )}
       </header>
       <ol className="stepper">
-        {process.steps.map((s, i) => (
-          <li key={s.id} className={`${i === curIdx ? 'cur' : ''} ${i <= doneIdx ? 'done' : ''} ${s.manual ? 'manual' : ''}`}>
-            <span className="stepper__dot">{i <= doneIdx ? <CircleCheck size={12} /> : s.manual ? <Hand size={11} /> : i + 1}</span>
-            <span className="stepper__name">{s.name}</span>
-            <small>{nameOf(ctx.index, s.actorId)}</small>
-          </li>
-        ))}
+        {process.steps.map((s, i) => {
+          const isCur = cur?.stepId === s.id;
+          const isDone = done.has(s.id) && !isCur;
+          return (
+            <li key={s.id} className={`${isCur ? 'cur' : ''} ${isDone ? 'done' : ''} ${s.manual ? 'manual' : ''}`}>
+              <span className="stepper__dot">{isDone ? <CircleCheck size={12} /> : s.manual ? <Hand size={11} /> : i + 1}</span>
+              <span className="stepper__name" title={s.name}>
+                {s.flow && s.flow !== 'data' && <span className={`flow flow--${s.flow}`}>{FLOW_SHORT[s.flow]}</span>}
+                {s.name}
+              </span>
+              <small>{nameOf(ctx.index, s.actorId)}</small>
+            </li>
+          );
+        })}
       </ol>
       <footer className="metrics">
         <div>
@@ -110,6 +129,8 @@ export function ProcessPanel() {
     </section>
   );
 }
+
+const FLOW_SHORT: Record<string, string> = { git: 'Git', nessie: 'Nessie', release: 'Релиз' };
 
 export function EventLogPanel() {
   const log = useCity((s) => s.log);
@@ -141,17 +162,22 @@ export function ImprovePanel() {
   const ctx = useCity((s) => s.ctx);
   const processId = useCity((s) => s.processId);
   const variant = useCity((s) => s.variant);
-  const setVariant = useCity((s) => s.setVariant);
-  const select = useCity((s) => s.select);
+  const { setVariant, select } = useCity.getState();
   const base = index.get(processId);
   const data = useMemo(() => {
     if (base?.kind !== 'process') return null;
-    const proposal = automateManualSteps();
-    return { proposal, cmp: compare(base, proposal, ctx), issues: findIssues(base, compileProcess(base, ctx, { runId: 'i' })) };
-  }, [base, ctx]);
+    const proposal = proposalFor(base);
+    return {
+      proposal,
+      cmp: proposal ? compare(base, proposal, ctx) : null,
+      issues: findIssues(base, compileProcess(base, ctx, { runId: 'i' })),
+      checks: processChecks(base),
+      naming: checkModelNaming(index),
+    };
+  }, [base, ctx, index]);
   if (!data) return null;
-  const { cmp, proposal, issues } = data;
-  const max = Math.max(cmp.asIs.cycleTime, cmp.toBe.cycleTime);
+  const { cmp, proposal, issues, checks, naming } = data;
+  const max = cmp ? Math.max(cmp.asIs.cycleTime, cmp.toBe.cycleTime) : 1;
   return (
     <section className="panel glass panel--wide">
       <header>
@@ -167,6 +193,16 @@ export function ImprovePanel() {
       </header>
       <div className="improve">
         <div className="improve__issues">
+          {checks.map((c) => (
+            <div key={c.id} className={`check ${c.ok ? 'check--ok' : 'check--bad'}`}>
+              {c.ok ? '✓' : '✗'} {c.title}
+              <small>{c.detail}</small>
+            </div>
+          ))}
+          <div className={`check ${naming.issues.length ? 'check--bad' : 'check--ok'}`}>
+            {naming.issues.length ? '✗' : '✓'} Стандарт именования: {naming.checked - new Set(naming.issues.map((i) => i.productId)).size}/{naming.checked}
+            <small>{naming.issues.length ? naming.issues.map((i) => `${index.nameOf(i.productId)}: ${i.message}`).join('; ') : 'Слой, префикс, реестры источников и доменов, Landing только для Pattern B, Bronze 1:1'}</small>
+          </div>
           {issues.map((f) => (
             <button key={f.id} className={`issue issue--${f.severity}`} onClick={() => select(f.entityId, { focus: true })}>
               <b>{f.title}</b>
@@ -175,35 +211,42 @@ export function ImprovePanel() {
           ))}
         </div>
         <div className="improve__proposal">
-          <b>{proposal.title}</b>
-          <small>{proposal.description}</small>
-          <div className="cmp">
-            <div>
-              <span>Как есть</span>
-              <div className="bar bar--asis">
-                <div style={{ width: `${(cmp.asIs.cycleTime / max) * 100}%` }} />
+          {proposal && cmp ? (
+            <>
+              <b>{proposal.title}</b>
+              <small>{proposal.description}</small>
+              <div className="cmp">
+                <div>
+                  <span>Как есть</span>
+                  <div className="bar bar--asis">
+                    <div style={{ width: `${(cmp.asIs.cycleTime / max) * 100}%` }} />
+                  </div>
+                  <b>{fmtSec(cmp.asIs.cycleTime)}</b>
+                </div>
+                <div>
+                  <span>Как будет</span>
+                  <div className="bar bar--tobe">
+                    <div style={{ width: `${(cmp.toBe.cycleTime / max) * 100}%` }} />
+                  </div>
+                  <b>{fmtSec(cmp.toBe.cycleTime)}</b>
+                </div>
               </div>
-              <b>{fmtSec(cmp.asIs.cycleTime)}</b>
-            </div>
-            <div>
-              <span>Как будет</span>
-              <div className="bar bar--tobe">
-                <div style={{ width: `${(cmp.toBe.cycleTime / max) * 100}%` }} />
+              <div className="improve__foot">
+                <span>
+                  −{Math.round(cmp.savedShare * 100)}% цикла · ручная доля {Math.round(cmp.asIs.manualShare * 100)}% → {Math.round(cmp.toBe.manualShare * 100)}%
+                </span>
+                <button className="btn" onClick={() => setVariant(variant === 'toBe' ? 'asIs' : 'toBe')}>
+                  {variant === 'toBe' ? 'Вернуть «как есть»' : 'Проиграть «как будет»'}
+                </button>
               </div>
-              <b>{fmtSec(cmp.toBe.cycleTime)}</b>
-            </div>
-          </div>
-          <div className="improve__foot">
-            <span>
-              −{Math.round(cmp.savedShare * 100)}% цикла · ручная доля {Math.round(cmp.asIs.manualShare * 100)}% → {Math.round(cmp.toBe.manualShare * 100)}%
-            </span>
-            <button className="btn" onClick={() => setVariant(variant === 'toBe' ? 'asIs' : 'toBe')}>
-              {variant === 'toBe' ? 'Вернуть «как есть»' : 'Проиграть «как будет»'}
-            </button>
-          </div>
-          <small className="muted">
-            Гипотеза на демо-модели. Решение принимает человек; эффект подтверждается только на фактических событиях.
-          </small>
+            </>
+          ) : (
+            <>
+              <b>Предложений нет</b>
+              <small>В процессе нет ручных шагов с вариантом автоматизации. Выберите другой процесс или опишите идею в поле automation шага.</small>
+            </>
+          )}
+          <small className="muted">Длительности условные. Решение принимает человек; эффект подтверждается на фактических событиях.</small>
         </div>
       </div>
     </section>
@@ -227,6 +270,20 @@ export function OverviewPanel() {
       </div>
       <div className="insp__body">
         <p className="insp__desc">Нажмите на здание, ноду или грузовик, чтобы открыть инспектор. Колесо — масштаб, правая кнопка — поворот.</p>
+        <section className="insp__section">
+          <h4>Слои Medallion</h4>
+          {index.all('layer').map((l) => {
+            const a = activity.active.get(l.id);
+            return (
+              <button key={l.id} className="sysrow" onClick={() => select(l.id, { focus: true })}>
+                <span className="layer-chip" style={{ background: LAYER_COLOR[l.layer] }} />
+                <span className="sysrow__name">{l.name}</span>
+                <small>{l.catalog}</small>
+                <span className={`badge ${a ? 'badge--work' : 'badge--idle'}`}>{a ? 'работает' : 'ожидание'}</span>
+              </button>
+            );
+          })}
+        </section>
         <section className="insp__section">
           <h4>Системы района</h4>
           {systems.map((s) => {

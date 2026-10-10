@@ -15,6 +15,7 @@ export const KIND_LABEL: Record<EntityT['kind'], string> = {
   system: 'Система',
   employee: 'Сотрудник · нода',
   dataProduct: 'Продукт данных',
+  layer: 'Слой данных',
   contract: 'Контракт',
   connector: 'Коннектор',
   process: 'Процесс',
@@ -31,6 +32,13 @@ export const ROLE_LABEL: Record<string, string> = {
   operations: 'Операции',
   metadata: 'Метаданные',
   context: 'Контекст',
+  orchestration: 'Оркестрация',
+  versioning: 'Версии данных',
+  ingestion: 'Загрузка',
+  gateway: 'Вход и UI',
+  secrets: 'Секреты',
+  observability: 'Наблюдаемость',
+  workspace: 'Рабочие места',
 };
 
 export const EVENT_LABEL: Record<string, string> = {

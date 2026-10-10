@@ -17,15 +17,21 @@ export function toMermaidFlowchart(model: EnterpriseModelT): string {
     for (const s of ix.all('system').filter((s) => s.domainId === d.id)) {
       lines.push(`    ${safe(s.id)}["${label(s.name)}"]`);
     }
+    for (const l of ix.all('layer').filter((l) => l.domainId === d.id)) {
+      lines.push(`    ${safe(l.id)}[("${label(l.name)} · ${label(l.catalog)}")]`);
+    }
     for (const p of ix.all('employee').filter((p) => p.domainId === d.id)) {
       lines.push(`    ${safe(p.id)}(("${label(p.name)}"))`);
     }
     for (const p of ix.all('dataProduct').filter((p) => p.domainId === d.id)) {
-      lines.push(`    ${safe(p.id)}[/"${label(p.name)} v${p.version}"/]`);
+      lines.push(`    ${safe(p.id)}[/"${label(p.technicalName ?? p.name)}"/]`);
     }
     lines.push('  end');
   }
 
+  for (const p of ix.all('dataProduct')) {
+    for (const src of p.sources) lines.push(`  ${safe(src)} --> ${safe(p.id)}`);
+  }
   for (const c of ix.all('connector')) {
     lines.push(`  ${safe(c.fromId)} -- "${c.interface}" --> ${safe(c.toId)}`);
   }

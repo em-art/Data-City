@@ -46,21 +46,21 @@ export type LensState = 'normal' | 'dim' | 'focus';
 export const LensContext = createContext<LensState>('normal');
 export const useLens = () => useContext(LensContext);
 
-const DATA_ROLES = new Set(['source', 'processing', 'storage', 'delivery', 'consumer']);
+const DATA_ROLES = new Set(['source', 'processing', 'storage', 'delivery', 'consumer', 'ingestion', 'versioning']);
 
 /** How a view mode presents a given entity. One scene, seven lenses. */
 export function lensFor(view: ViewMode, entityId: string, ix: ModelIndex, process?: ProcessT): LensState {
   const e = ix.get(entityId);
   if (!e) return 'normal';
-  const actors = new Set(process?.steps.map((s) => s.actorId) ?? []);
+  const actors = new Set(process?.steps.flatMap((s) => [s.actorId, ...s.via]) ?? []);
   switch (view) {
     case 'city':
     case 'metadata':
       return 'normal';
     case 'systems':
-      return e.kind === 'system' ? 'normal' : 'dim';
+      return e.kind === 'system' || e.kind === 'layer' ? 'normal' : 'dim';
     case 'data':
-      return e.kind === 'system' && DATA_ROLES.has(e.role) ? 'normal' : 'dim';
+      return e.kind === 'layer' || (e.kind === 'system' && DATA_ROLES.has(e.role)) ? 'normal' : 'dim';
     case 'people':
       return e.kind === 'employee' ? 'focus' : 'dim';
     case 'process':
@@ -74,14 +74,14 @@ export function useLensFor(view: ViewMode, entityId: string, ix: ModelIndex, pro
 }
 
 /** Standard matte material that fades out under the 'dim' lens. */
-export function Mat({ c, emissive, glow = 0, rough = 0.8 }: { c: string; emissive?: string; glow?: number; rough?: number }) {
+export function Mat({ c, emissive, glow = 0, rough = 0.8, metal = 0.02 }: { c: string; emissive?: string; glow?: number; rough?: number; metal?: number }) {
   const lens = useLens();
   const dim = lens === 'dim';
   return (
     <meshStandardMaterial
       color={c}
       roughness={rough}
-      metalness={0.02}
+      metalness={metal}
       emissive={emissive ?? '#000000'}
       emissiveIntensity={glow}
       transparent={dim}

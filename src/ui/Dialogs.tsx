@@ -3,6 +3,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { ARCHETYPE_BY_ROLE, CATALOG } from '@/assets/catalog';
 import { validateModel } from '@/model/graph';
 import { toMermaidFlowchart, toMermaidSequence } from '@/model/mermaid';
+import { checkProductNaming, namingHint } from '@/model/naming';
 import type { EntityT, InterfaceTypeT, SystemT } from '@/model/schema';
 import { autoPlace } from '@/space/layout';
 import { SpaceModel, type ArchetypeT } from '@/space/schema';
@@ -78,6 +79,8 @@ export function AddDialog() {
     iface: 'sql' as InterfaceTypeT,
     version: '1.0.0',
     producedBy: systems.find((s) => s.role === 'processing')?.id ?? '',
+    technicalName: '',
+    layerId: '',
     consumerId: '',
     freshness: 'T+1',
   });
@@ -103,6 +106,7 @@ export function AddDialog() {
           technologies: list(f.tech),
           interfaces: f.interfaces,
           status: 'healthy',
+          repos: [],
           owner: f.owner || undefined,
           tags: [],
           docs: [],
@@ -140,8 +144,9 @@ export function AddDialog() {
         select(id);
       } else {
         const id = uniqueId('dp', name, index.byId);
-        const producer = index.get(f.producedBy);
-        if (producer?.kind !== 'system') throw new Error('Выберите систему-производителя');
+        const layer = f.layerId ? index.get(f.layerId) : undefined;
+        const producer = layer ?? index.get(f.producedBy);
+        if (producer?.kind !== 'system' && producer?.kind !== 'layer') throw new Error('Выберите слой или систему-производителя');
         const s = useCity.getState();
         s.addEntity({
           id,
@@ -151,6 +156,8 @@ export function AddDialog() {
           domainId: producer.domainId,
           producedBy: producer.id,
           version: f.version,
+          technicalName: f.technicalName.trim() || undefined,
+          layerId: layer?.id,
           sources: [],
           quality: { checks: 0, passed: 0 },
           classification: 'internal',
@@ -188,6 +195,17 @@ export function AddDialog() {
       setError(err instanceof Error ? err.message : String(err));
     }
   };
+
+  const layers = index.all('layer');
+  const layerE = f.layerId ? index.get(f.layerId) : undefined;
+  const layerKind = layerE?.kind === 'layer' ? layerE.layer : undefined;
+  const namingIssues =
+    tab === 'product' && f.technicalName && f.layerId
+      ? checkProductNaming(
+          { id: 'dp.draft', kind: 'dataProduct', name: f.name || 'draft', description: '', domainId: 'dom.data', producedBy: f.layerId, version: f.version, technicalName: f.technicalName, layerId: f.layerId, sources: [], quality: { checks: 0, passed: 0 }, classification: 'internal', tags: [], docs: [], history: [] },
+          index,
+        )
+      : [];
 
   const systemOptions = systems.map((s) => (
     <option key={s.id} value={s.id}>
@@ -315,11 +333,35 @@ export function AddDialog() {
         {tab === 'product' && (
           <>
             <div className="form__row">
-              <Field label="Производитель">
-                <select value={f.producedBy} onChange={(e) => up({ producedBy: e.target.value })}>
-                  {systemOptions}
+              <Field label="Слой">
+                <select value={f.layerId} onChange={(e) => up({ layerId: e.target.value })}>
+                  <option value="">— вне слоёв —</option>
+                  {layers.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
                 </select>
               </Field>
+              <Field label={`Техническое имя${layerKind ? ` · ${namingHint(layerKind)}` : ''}`}>
+                <input value={f.technicalName} onChange={(e) => up({ technicalName: e.target.value })} placeholder="corpgov_dim__person" />
+              </Field>
+            </div>
+            {namingIssues.length > 0 && (
+              <div className="issue issue--warn">
+                {namingIssues.map((i) => (
+                  <small key={i.rule}>✎ {i.message}</small>
+                ))}
+              </div>
+            )}
+            <div className="form__row">
+              {!f.layerId && (
+                <Field label="Производитель">
+                  <select value={f.producedBy} onChange={(e) => up({ producedBy: e.target.value })}>
+                    {systemOptions}
+                  </select>
+                </Field>
+              )}
               <Field label="Версия">
                 <input value={f.version} onChange={(e) => up({ version: e.target.value })} />
               </Field>

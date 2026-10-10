@@ -56,7 +56,7 @@ export function CityCanvas() {
       shadows="percentage"
       orthographic
       dpr={[1, 2]}
-      camera={{ position: [47, 50, 54], zoom: 15, near: -200, far: 400 }}
+      camera={{ position: [54, 43, 47], zoom: 11.5, near: -200, far: 400 }}
       onPointerMissed={() => useCity.getState().select(null)}
       gl={{ antialias: true }}
     >
@@ -77,7 +77,7 @@ export function CityCanvas() {
       <directionalLight position={[30, 20, -20]} intensity={0.35} color="#dfe6ff" />
       <MapControls
         makeDefault
-        target={[8, 0, 9]}
+        target={[15, 0, 2]}
         enableDamping
         dampingFactor={0.12}
         minZoom={7}

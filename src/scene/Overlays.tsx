@@ -72,7 +72,7 @@ function Arc({ from, to, color, flow = false, width = 2.5, lift = 4, label }: { 
   );
 }
 
-const DATA_ROLES = new Set(['source', 'processing', 'storage', 'delivery', 'consumer']);
+const DATA_ROLES = new Set(['source', 'processing', 'storage', 'delivery', 'consumer', 'ingestion', 'versioning']);
 
 function ConnectorArcs({ dataOnly }: { dataOnly: boolean }) {
   const index = useCity((s) => s.index);
@@ -93,7 +93,7 @@ function ConnectorArcs({ dataOnly }: { dataOnly: boolean }) {
             to={to}
             color={INTERFACE_COLOR[c.interface] ?? C.accent}
             flow={dataOnly}
-            label={dataOnly ? undefined : `${c.interface.toUpperCase()}${c.technology ? ' · ' + c.technology : ''}`}
+            label={dataOnly ? undefined : c.interface.toUpperCase()}
           />
         );
       })}
@@ -204,17 +204,38 @@ export function LabelExtra({ entityId }: { entityId: string }) {
     const products = index.all('dataProduct').filter((p) => p.producedBy === entityId);
     if (!products.length) return null;
     return (
-      <div className="lx">
+      <div className="lx lx--side">
         {products.map((p) => (
           <div key={p.id} className="lx__product">
-            ▣ {p.name} <b>v{p.version}</b> · {p.quality.passed}/{p.quality.checks} ✓
+            ▣ {p.technicalName ?? p.name} {p.version !== '—' && <b>v{p.version}</b>}
+            {p.quality.checks > 0 && ` · ${p.quality.passed}/${p.quality.checks} ✓`}
           </div>
         ))}
       </div>
     );
   }
 
+  if (view === 'systems') {
+    if (e.kind === 'system' && (e.hostGroup || e.contour)) {
+      return (
+        <div className="lx lx--meta">
+          {[e.hostGroup, e.contour === 'test' ? 'test-контур' : e.contour].filter(Boolean).join(' · ')}
+        </div>
+      );
+    }
+    if (e.kind === 'layer') return <div className="lx lx--meta">{e.catalog}</div>;
+    return null;
+  }
+
   if (view === 'metadata') {
+    if (e.kind === 'layer') {
+      return (
+        <div className="lx lx--meta">
+          <div>🪣 {e.bucket} · ref {e.nessieRef}</div>
+          {e.prefixes.length > 0 && <div>✎ {e.prefixes.join(' ')}</div>}
+        </div>
+      );
+    }
     if (e.kind !== 'system') return null;
     const n = index.all('contract').filter((c) => c.providerId === e.id || c.consumerId === e.id).length;
     return (

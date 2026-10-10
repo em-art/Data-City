@@ -35,14 +35,16 @@ export function refsOf(e: EntityT): string[] {
     case 'employee':
       return [e.domainId];
     case 'dataProduct':
-      return [e.domainId, e.producedBy, ...e.sources];
+      return [e.domainId, e.producedBy, ...e.sources, ...(e.layerId ? [e.layerId] : [])];
+    case 'layer':
+      return [e.domainId, ...(e.storedIn ? [e.storedIn] : []), ...e.processedBy];
     case 'contract':
       return [e.productId, e.providerId, e.consumerId, ...e.allowedRoute];
     case 'connector':
     case 'relationship':
       return [e.fromId, e.toId];
     case 'process':
-      return [e.domainId, ...e.steps.flatMap((s) => (s.carries ? [s.actorId, s.carries] : [s.actorId]))];
+      return [e.domainId, ...e.steps.flatMap((s) => [s.actorId, ...s.via, ...(s.carries ? [s.carries] : [])])];
   }
 }
 

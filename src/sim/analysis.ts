@@ -1,8 +1,8 @@
 /**
  * Process analysis for the "Улучшения" view: where time goes, where work
- * waits on people, how many hand-offs there are — and what a proposed
- * change would save. Works on compiled runs, so the same code can later
- * analyse runs reconstructed from real events (Нить).
+ * waits on people, whether a change passes all its flows — and what a
+ * proposed change would save. Works on compiled runs, so the same code can
+ * later analyse runs reconstructed from real events (Нить).
  */
 import type { ProcessT } from '@/model/schema';
 import { compileProcess, type Run, type SimContext } from './engine';
@@ -12,6 +12,13 @@ export interface Finding {
   severity: 'info' | 'warn' | 'critical';
   entityId: string;
   stepId?: string;
+  title: string;
+  detail: string;
+}
+
+export interface Check {
+  id: string;
+  ok: boolean;
   title: string;
   detail: string;
 }
@@ -43,37 +50,47 @@ export function metricsOf(run: Run): ProcessMetrics {
   };
 }
 
+const FLOW_LABEL: Record<string, string> = { git: 'Git Flow', nessie: 'Nessie Flow', release: 'Релизный цикл' };
+
+/** Structural checks that should hold for the process (shown as ✓ / ✗). */
+export function processChecks(process: ProcessT): Check[] {
+  const out: Check[] = [];
+  if (process.category === 'change') {
+    const flows = new Set(process.steps.map((s) => s.flow));
+    for (const f of ['git', 'nessie', 'release']) {
+      out.push({
+        id: `flow:${f}`,
+        ok: flows.has(f as never),
+        title: FLOW_LABEL[f]!,
+        detail: flows.has(f as never)
+          ? 'Флоу пройден'
+          : 'Пропущен — типичная причина расхождения «в Git готово, а в проде нет»',
+      });
+    }
+  }
+  return out;
+}
+
 export function findIssues(process: ProcessT, run: Run): Finding[] {
   const out: Finding[] = [];
   const m = metricsOf(run);
   for (const s of process.steps) {
     if (s.manual) {
+      const share = m.cycleTime ? s.duration / m.cycleTime : 0;
       out.push({
         id: `manual:${s.id}`,
-        severity: s.duration / m.cycleTime > 0.2 ? 'critical' : 'warn',
+        severity: s.automation ? (share > 0.2 ? 'critical' : 'warn') : 'info',
         entityId: s.actorId,
         stepId: s.id,
         title: `Ручной шаг: ${s.name}`,
-        detail: `${s.duration.toFixed(0)} с из ${m.cycleTime.toFixed(0)} с цикла (${Math.round((s.duration / m.cycleTime) * 100)}%). Поставка стоит, пока человек не согласует.`,
+        detail: `${s.duration.toFixed(0)} с из ${m.cycleTime.toFixed(0)} с цикла (${Math.round(share * 100)}%). ${
+          s.automation ? 'Есть вариант автоматизации.' : 'Осознанное решение человека — не кандидат на автоматизацию.'
+        }`,
       });
     }
   }
-  const visits = new Map<string, number>();
-  let prev = '';
-  for (const s of process.steps) {
-    if (s.actorId !== prev) visits.set(s.actorId, (visits.get(s.actorId) ?? 0) + 1);
-    prev = s.actorId;
-  }
-  for (const [id, n] of visits) {
-    if (n > 1) {
-      out.push({
-        id: `revisit:${id}`,
-        severity: 'warn',
-        entityId: id,
-        title: 'Повторное возвращение',
-        detail: `Процесс возвращается к объекту ${n} раз(а) — возможное повторное согласование.`,
-      });
-    }
+  for (const c of processChecks(process)) {
+    if (!c.ok) out.push({ id: c.id, severity: 'critical', entityId: process.steps[0]!.actorId, title: `Пропущен ${c.title}`, detail: c.detail });
   }
   for (const p of run.phases) {
     if (p.routeViolation) {
@@ -98,23 +115,25 @@ export interface Proposal {
 }
 
 /**
- * Replace manual approvals with an automated policy, executed where the
- * product already is (the previous step's actor) — so no extra trip.
+ * Automate the manual steps that carry a concrete `automation` idea. The
+ * automated step runs where the cargo already is (previous actor), so no
+ * extra trip is introduced. Returns null when there is nothing to propose.
  */
-export function automateManualSteps(): Proposal {
+export function proposalFor(process: ProcessT): Proposal | null {
+  const candidates = process.steps.filter((s) => s.manual && s.automation);
+  if (!candidates.length) return null;
   return {
     id: 'automate-manual',
-    title: 'Автосогласование по политике качества',
-    description:
-      'Публикация согласуется автоматически, если все проверки качества пройдены и схема совместима с контрактом. Владелец получает уведомление и может откатить версию.',
+    title: candidates.length === 1 ? `Автоматизировать: ${candidates[0]!.name}` : `Автоматизировать ${candidates.length} ручных шага`,
+    description: candidates.map((s) => s.automation).join(' '),
     apply: (p) => ({
       ...p,
-      name: `${p.name} (to-be)`,
+      name: `${p.name} (как будет)`,
       steps: p.steps.map((s, i) =>
-        s.manual
+        s.manual && s.automation
           ? {
               ...s,
-              name: 'Автосогласование по политике',
+              name: `Авто: ${s.name}`,
               actorId: p.steps[i - 1]?.actorId ?? s.actorId,
               manual: false,
               duration: 0.5,

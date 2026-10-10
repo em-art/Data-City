@@ -21,6 +21,16 @@ export const Archetype = z.enum([
   'archive', // metadata catalog
   'tower', // context infrastructure — Нить
   'employeeNode', // person + assistant
+  'layerHall', // Medallion layer
+  'queryHub', // Trino
+  'controlTower', // Dagster
+  'silos', // Ceph RGW
+  'switchyard', // Nessie
+  'ingestDock', // dlt
+  'lab', // JupyterHub
+  'gatehouse', // Traefik
+  'vault', // Infisical
+  'watchtower', // observability
 ]);
 
 export const Placement = z.object({

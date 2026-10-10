@@ -55,7 +55,10 @@ export function SimDriver() {
       }
       emitted.current.set(run.id, i);
       const ph = sampleRun(run, t, s.ctx).phase;
-      if (ph && ph.kind !== 'travel') activity.active.set(ph.actorId, ph.kind);
+      if (ph && ph.kind !== 'travel') {
+        activity.active.set(ph.actorId, ph.kind);
+        for (const v of ph.via ?? []) if (!activity.active.has(v)) activity.active.set(v, 'work');
+      }
     }
     if (fresh.length) s.pushEvents(fresh);
     if (emitted.current.size > 64) {

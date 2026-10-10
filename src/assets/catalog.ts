@@ -19,6 +19,18 @@ import {
   Workshop,
   type ArchetypeProps,
 } from '@/scene/archetypes';
+import {
+  ControlTower,
+  Gatehouse,
+  IngestDock,
+  Lab,
+  LayerHall,
+  QueryHub,
+  Silos,
+  Switchyard,
+  Vault,
+  Watchtower,
+} from '@/scene/archetypesDp';
 import type { SystemT } from '@/model/schema';
 import type { ArchetypeT } from '@/space/schema';
 
@@ -41,6 +53,16 @@ export const CATALOG: Record<ArchetypeT, AssetEntry> = {
   archive: { label: 'Архив / каталог', component: Archive, labelHeight: 4 },
   tower: { label: 'Башня контекста', component: Tower, labelHeight: 8.2 },
   employeeNode: { label: 'Нода сотрудника', component: EmployeeNodeModel, labelHeight: 1.9 },
+  layerHall: { label: 'Цех слоя (Medallion)', component: LayerHall, labelHeight: 5.2 },
+  queryHub: { label: 'Движок запросов', component: QueryHub, labelHeight: 6.4 },
+  controlTower: { label: 'Диспетчерская вышка', component: ControlTower, labelHeight: 7.8 },
+  silos: { label: 'Силосы хранения', component: Silos, labelHeight: 5 },
+  switchyard: { label: 'Стрелочный пост версий', component: Switchyard, labelHeight: 3.2 },
+  ingestDock: { label: 'Приёмный док', component: IngestDock, labelHeight: 3.6 },
+  lab: { label: 'Лаборатория', component: Lab, labelHeight: 3.8 },
+  gatehouse: { label: 'Въездные ворота', component: Gatehouse, labelHeight: 4 },
+  vault: { label: 'Хранилище секретов', component: Vault, labelHeight: 3.4 },
+  watchtower: { label: 'Смотровая вышка', component: Watchtower, labelHeight: 6.6 },
 };
 
 /** Default building for a system role — used by the editor. */
@@ -54,4 +76,11 @@ export const ARCHETYPE_BY_ROLE: Record<SystemT['role'], ArchetypeT> = {
   operations: 'opsCenter',
   metadata: 'archive',
   context: 'tower',
+  orchestration: 'controlTower',
+  versioning: 'switchyard',
+  ingestion: 'ingestDock',
+  gateway: 'gatehouse',
+  secrets: 'vault',
+  observability: 'watchtower',
+  workspace: 'lab',
 };
