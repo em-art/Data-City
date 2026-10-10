@@ -12,10 +12,22 @@ export interface RoadGraph {
 const dist = (a: Vec2T, b: Vec2T) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
 export function buildRoadGraph(space: SpaceModelT): RoadGraph {
-  const nodes = new Map(space.roads.nodes.map((n) => [n.id, n.at] as const));
+  return buildGraph(space.roads);
+}
+
+/** Conveyor belts form a second, separate network (Nessie). */
+export function buildBeltGraph(space: SpaceModelT): RoadGraph {
+  return buildGraph({
+    nodes: space.belts.flatMap((b) => b.nodes),
+    edges: space.belts.flatMap((b) => b.edges),
+  });
+}
+
+export function buildGraph(net: { nodes: SpaceModelT['roads']['nodes']; edges: SpaceModelT['roads']['edges'] }): RoadGraph {
+  const nodes = new Map(net.nodes.map((n) => [n.id, n.at] as const));
   const adj = new Map<string, { to: string; w: number }[]>();
   for (const id of nodes.keys()) adj.set(id, []);
-  for (const [a, b] of space.roads.edges) {
+  for (const [a, b] of net.edges) {
     const pa = nodes.get(a);
     const pb = nodes.get(b);
     if (!pa || !pb) throw new Error(`road edge references unknown node ${a}-${b}`);

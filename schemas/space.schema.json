@@ -138,14 +138,15 @@
               "archive",
               "tower",
               "employeeNode",
-              "layerHall",
+              "robotNode",
+              "beltStation",
+              "loadingDock",
               "queryHub",
               "controlTower",
               "silos",
-              "switchyard",
               "ingestDock",
               "lab",
-              "gatehouse",
+              "checkpoint",
               "vault",
               "watchtower"
             ]
@@ -195,6 +196,9 @@
           "port": {
             "type": "string"
           },
+          "beltNode": {
+            "type": "string"
+          },
           "accent": {
             "type": "string"
           }
@@ -203,6 +207,84 @@
           "entityId",
           "archetype",
           "position"
+        ]
+      }
+    },
+    "belts": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "pattern": "^[a-z]+(\\.[a-z0-9-]+)+$"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              },
+              "required": [
+                "id",
+                "at"
+              ]
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "loops": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "entityId",
+          "nodes",
+          "edges"
         ]
       }
     },

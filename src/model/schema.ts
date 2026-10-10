@@ -62,6 +62,7 @@ export const System = Base.extend({
     'secrets',
     'observability',
     'workspace',
+    'serving',
   ]),
   technologies: z.array(z.string()).default([]),
   interfaces: z.array(InterfaceType).default([]),

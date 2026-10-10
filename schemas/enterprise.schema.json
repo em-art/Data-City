@@ -201,7 +201,8 @@
                   "gateway",
                   "secrets",
                   "observability",
-                  "workspace"
+                  "workspace",
+                  "serving"
                 ]
               },
               "technologies": {

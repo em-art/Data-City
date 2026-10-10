@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { useCity } from '@/store/city';
 import { Building } from './Building';
+import { Conveyors } from './Conveyor';
 import { Districts, Ground, Roads } from './Ground';
 import { C } from './look';
 import { Overlays } from './Overlays';
@@ -41,6 +42,7 @@ function City() {
       <Districts />
       <Roads />
       <Props />
+      <Conveyors />
       {placements.map((p) => (
         <Building key={p.entityId} placement={p} />
       ))}

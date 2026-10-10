@@ -28,7 +28,6 @@
       "description": "Бизнес-домен. Silver и Gold именуются по бизнес-домену: corpgov_dim__…, corpgov_exp__…",
       "owner": "Корпоративный блок"
     },
-
     {
       "id": "sys.eva",
       "kind": "system",
@@ -39,9 +38,19 @@
       "loadPattern": "A",
       "description": "Источник с SQL-интерфейсом. Pattern A: подключён к Trino как каталог, данные остаются у источника, в Ceph не копируются.",
       "owner": "Команда EVA",
-      "technologies": ["PostgreSQL"],
-      "interfaces": ["sql", "api"],
-      "docs": [{ "title": "S2.4 Pattern A — федеративное подключение", "url": "#docs/pattern-a" }]
+      "technologies": [
+        "PostgreSQL"
+      ],
+      "interfaces": [
+        "sql",
+        "api"
+      ],
+      "docs": [
+        {
+          "title": "S2.4 Pattern A — федеративное подключение",
+          "url": "#docs/pattern-a"
+        }
+      ]
     },
     {
       "id": "sys.extapi",
@@ -53,8 +62,15 @@
       "loadPattern": "B",
       "description": "Пример источника без SQL-интерфейса (API, файлы, очереди). Pattern B: данные копируются dlt в iceberg_landing по расписанию.",
       "owner": "Внешний поставщик",
-      "interfaces": ["api"],
-      "docs": [{ "title": "S2.5 Pattern B — ingestion через dlt", "url": "#docs/pattern-b" }]
+      "interfaces": [
+        "api"
+      ],
+      "docs": [
+        {
+          "title": "S2.5 Pattern B — ingestion через dlt",
+          "url": "#docs/pattern-b"
+        }
+      ]
     },
     {
       "id": "sys.gitlab",
@@ -64,11 +80,24 @@
       "role": "engineering",
       "description": "Код моделей, пайплайнов и конфигурации; MR, CI-раннер, реестр образов. Единица изменения Git Flow — MR в ветку репозитория.",
       "owner": "Команда Data Platform",
-      "technologies": ["GitLab CI", "GitLab Runner", "Container Registry"],
-      "interfaces": ["api", "ui"],
+      "technologies": [
+        "GitLab CI",
+        "GitLab Runner",
+        "Container Registry"
+      ],
+      "interfaces": [
+        "api",
+        "ui"
+      ],
       "contour": "prod",
       "hostGroup": "инфраструктура",
-      "repos": ["dp-infra", "dp-ingestion", "dp-orchestration", "dp-transform", "dp-contracts"]
+      "repos": [
+        "dp-infra",
+        "dp-ingestion",
+        "dp-orchestration",
+        "dp-transform",
+        "dp-contracts"
+      ]
     },
     {
       "id": "sys.traefik",
@@ -76,13 +105,20 @@
       "name": "Traefik",
       "domainId": "dom.data",
       "role": "gateway",
-      "description": "Вход для людей и UI: единый reverse-proxy с wildcard TLS. Данные через него не ходят — только веб-доступ к сервисам.",
+      "description": "КПП района: будка со шлагбаумом на въезде. Через него проходят люди и UI сервисов (Dagster, JupyterHub, Trino, Nessie); wildcard TLS.",
       "owner": "Команда Data Platform",
-      "technologies": ["Traefik", "Wildcard TLS"],
-      "interfaces": ["ui"],
+      "technologies": [
+        "Traefik",
+        "Wildcard TLS"
+      ],
+      "interfaces": [
+        "ui"
+      ],
       "contour": "prod",
       "hostGroup": "инфраструктура",
-      "repos": ["dp-infra"]
+      "repos": [
+        "dp-infra"
+      ]
     },
     {
       "id": "sys.trino",
@@ -92,11 +128,20 @@
       "role": "processing",
       "description": "Движок запросов. Федеративные каталоги источников (Pattern A) и Iceberg-каталоги слоёв: iceberg_landing, iceberg, iceberg_dev, iceberg_sandbox. Исполняет dbt-модели.",
       "owner": "Команда Data Platform",
-      "technologies": ["Trino", "Apache Iceberg", "dbt-trino"],
-      "interfaces": ["sql", "ui"],
+      "technologies": [
+        "Trino",
+        "Apache Iceberg",
+        "dbt-trino"
+      ],
+      "interfaces": [
+        "sql",
+        "ui"
+      ],
       "contour": "prod",
       "hostGroup": "движок запросов",
-      "repos": ["dp-infra"]
+      "repos": [
+        "dp-infra"
+      ]
     },
     {
       "id": "sys.dagster",
@@ -106,11 +151,22 @@
       "role": "orchestration",
       "description": "Оркестратор: assets, sensors, jobs, schedules. Запускает dlt-пайплайны и dbt-модели, выкладывается релизным циклом.",
       "owner": "Команда Data Platform",
-      "technologies": ["Dagster", "dbt", "dlt", "PostgreSQL"],
-      "interfaces": ["ui", "api"],
+      "technologies": [
+        "Dagster",
+        "dbt",
+        "dlt",
+        "PostgreSQL"
+      ],
+      "interfaces": [
+        "ui",
+        "api"
+      ],
       "contour": "test",
       "hostGroup": "платформа",
-      "repos": ["dp-orchestration", "dp-transform"]
+      "repos": [
+        "dp-orchestration",
+        "dp-transform"
+      ]
     },
     {
       "id": "sys.ceph",
@@ -120,8 +176,14 @@
       "role": "storage",
       "description": "S3-хранилище: по бакету на слой — dp-landing, dp-bronze, dp-silver, dp-gold, dp-sandbox. Таблицы — Apache Iceberg.",
       "owner": "Команда Data Platform",
-      "technologies": ["Ceph RGW", "S3", "Apache Iceberg"],
-      "interfaces": ["file"],
+      "technologies": [
+        "Ceph RGW",
+        "S3",
+        "Apache Iceberg"
+      ],
+      "interfaces": [
+        "file"
+      ],
       "contour": "prod",
       "hostGroup": "хранение"
     },
@@ -131,10 +193,16 @@
       "name": "Nessie",
       "domainId": "dom.data",
       "role": "versioning",
-      "description": "Версионирование данных. Единица изменения Nessie Flow — ref (ветка данных) и merge в main. Gold в main — только через CI.",
+      "description": "Лента версий данных. Bronze → Silver → Gold едут по ней от станции к станции; ветки dev и sandbox/{login} — ответвления ленты, merge в main (для Gold — только через CI) — возврат на главную линию.",
       "owner": "Команда Data Platform",
-      "technologies": ["Project Nessie", "Iceberg catalog"],
-      "interfaces": ["api", "ui"],
+      "technologies": [
+        "Project Nessie",
+        "Iceberg catalog"
+      ],
+      "interfaces": [
+        "api",
+        "ui"
+      ],
       "contour": "prod",
       "hostGroup": "хранение"
     },
@@ -146,11 +214,18 @@
       "role": "ingestion",
       "description": "Загрузка источников без SQL-интерфейса в iceberg_landing (Pattern B). Запускается Dagster по расписанию.",
       "owner": "Команда Data Platform",
-      "technologies": ["dlt"],
-      "interfaces": ["api", "file"],
+      "technologies": [
+        "dlt"
+      ],
+      "interfaces": [
+        "api",
+        "file"
+      ],
       "contour": "test",
       "hostGroup": "платформа",
-      "repos": ["dp-ingestion"]
+      "repos": [
+        "dp-ingestion"
+      ]
     },
     {
       "id": "sys.jupyter",
@@ -160,8 +235,13 @@
       "role": "workspace",
       "description": "Рабочие места аналитиков и инженеров. Эксперименты — в личном сэндбоксе sandbox/{login}.",
       "owner": "Команда Data Platform",
-      "technologies": ["JupyterHub"],
-      "interfaces": ["ui", "sql"],
+      "technologies": [
+        "JupyterHub"
+      ],
+      "interfaces": [
+        "ui",
+        "sql"
+      ],
       "contour": "test",
       "hostGroup": "платформа"
     },
@@ -173,8 +253,13 @@
       "role": "secrets",
       "description": "Хранилище секретов: доступы к источникам, хранилищу и каталогам. Имена ключей — латиницей.",
       "owner": "Команда Data Platform",
-      "technologies": ["Infisical"],
-      "interfaces": ["api", "ui"],
+      "technologies": [
+        "Infisical"
+      ],
+      "interfaces": [
+        "api",
+        "ui"
+      ],
       "contour": "prod",
       "hostGroup": "сервисы"
     },
@@ -186,8 +271,15 @@
       "role": "observability",
       "description": "Логи, метрики, алерты. Дашборды «DP / {Layer} / {Name}», потоки логов «{vm}_{service}», jobs «dp_{service}», алерты «DP_{SEVERITY}_{What}».",
       "owner": "Команда Data Platform",
-      "technologies": ["Loki", "Grafana", "Prometheus"],
-      "interfaces": ["ui", "api"],
+      "technologies": [
+        "Loki",
+        "Grafana",
+        "Prometheus"
+      ],
+      "interfaces": [
+        "ui",
+        "api"
+      ],
       "contour": "prod",
       "hostGroup": "сервисы"
     },
@@ -199,19 +291,32 @@
       "role": "metadata",
       "description": "Цифровая карта: описания моделей и полей, владельцы, lineage. Описания на кириллице допустимы — в отличие от технических имён.",
       "owner": "Команда Data Platform",
-      "technologies": ["OpenMetadata"],
-      "interfaces": ["api", "ui", "mcp"]
+      "technologies": [
+        "OpenMetadata"
+      ],
+      "interfaces": [
+        "api",
+        "ui",
+        "mcp"
+      ]
     },
     {
-      "id": "sys.nit",
+      "id": "sys.cube",
       "kind": "system",
-      "name": "Нить",
+      "name": "Cube.dev",
       "domainId": "dom.data",
-      "role": "context",
-      "description": "Инфраструктура контекста: персональные ноды сотрудников, память, помощники и связи между ними.",
-      "owner": "Команда Нить",
-      "technologies": ["Graph store", "LLM assistants"],
-      "interfaces": ["mcp", "api"]
+      "role": "serving",
+      "description": "Интерфейс выдачи: семантический слой поверх Gold — метрики, кэш, REST / GraphQL / SQL API. Отгрузочный док: погрузчики грузят продукты в грузовики к потребителям.",
+      "owner": "Команда Data Platform",
+      "technologies": [
+        "Cube.dev"
+      ],
+      "interfaces": [
+        "api",
+        "sql"
+      ],
+      "contour": "prod",
+      "hostGroup": "выдача"
     },
     {
       "id": "sys.istok",
@@ -221,9 +326,21 @@
       "role": "delivery",
       "description": "Доставка Gold-продуктов потребителям по контрактам (dp-contracts: схемы, SLA, datacontract-cli) и правам доступа.",
       "owner": "Команда ИСТОК",
-      "technologies": ["Trino", "REST Gateway", "MCP server", "datacontract-cli"],
-      "interfaces": ["api", "sql", "stream", "mcp"],
-      "repos": ["dp-contracts"]
+      "technologies": [
+        "Trino",
+        "REST Gateway",
+        "MCP server",
+        "datacontract-cli"
+      ],
+      "interfaces": [
+        "api",
+        "sql",
+        "stream",
+        "mcp"
+      ],
+      "repos": [
+        "dp-contracts"
+      ]
     },
     {
       "id": "sys.bi",
@@ -233,10 +350,14 @@
       "role": "consumer",
       "description": "BI-отчёты корпоративного управления. Читают только Gold.",
       "owner": "emp.analyst",
-      "technologies": ["BI"],
-      "interfaces": ["sql", "ui"]
+      "technologies": [
+        "BI"
+      ],
+      "interfaces": [
+        "sql",
+        "ui"
+      ]
     },
-
     {
       "id": "layer.landing",
       "kind": "layer",
@@ -248,10 +369,17 @@
       "bucket": "dp-landing",
       "repo": "dp-ingestion",
       "storedIn": "sys.ceph",
-      "processedBy": ["sys.dlt", "sys.dagster"],
-      "description": "Сырые данные as-is. Существует только для Pattern B.",
-      "does": ["Сырые данные as-is от dlt"],
-      "doesNot": ["Не заводится для источников с Trino-коннектором — stg_ читает каталог напрямую"]
+      "processedBy": [
+        "sys.dlt",
+        "sys.dagster"
+      ],
+      "description": "Склад в Ceph (бакет dp-landing): сюда привозят сырые данные из систем без SQL-интерфейса и складывают as-is. Только для Pattern B.",
+      "does": [
+        "Сырые данные as-is от dlt"
+      ],
+      "doesNot": [
+        "Не заводится для источников с Trino-коннектором — stg_ читает каталог напрямую"
+      ]
     },
     {
       "id": "layer.bronze",
@@ -262,13 +390,28 @@
       "catalog": "iceberg / iceberg_dev",
       "nessieRef": "dev → main",
       "bucket": "dp-bronze",
-      "prefixes": ["stg_"],
+      "prefixes": [
+        "stg_"
+      ],
       "repo": "dp-transform",
       "storedIn": "sys.ceph",
-      "processedBy": ["sys.dagster", "sys.trino"],
+      "processedBy": [
+        "sys.dagster",
+        "sys.trino",
+        "sys.nessie"
+      ],
       "description": "Iceberg: dedup, type cast, технические поля. Именуется по источнику.",
-      "does": ["1:1 к источнику", "рейминг, ретайп", "нормализация единиц", "дедуп снимков"],
-      "doesNot": ["джойны других источников", "агрегации", "бизнес-правила"]
+      "does": [
+        "1:1 к источнику",
+        "рейминг, ретайп",
+        "нормализация единиц",
+        "дедуп снимков"
+      ],
+      "doesNot": [
+        "джойны других источников",
+        "агрегации",
+        "бизнес-правила"
+      ]
     },
     {
       "id": "layer.silver",
@@ -279,13 +422,28 @@
       "catalog": "iceberg / iceberg_dev",
       "nessieRef": "dev → main",
       "bucket": "dp-silver",
-      "prefixes": ["{domain}_dim__", "{domain}_fct__", "{domain}_br__"],
+      "prefixes": [
+        "{domain}_dim__",
+        "{domain}_fct__",
+        "{domain}_br__"
+      ],
       "repo": "dp-transform",
       "storedIn": "sys.ceph",
-      "processedBy": ["sys.dagster", "sys.trino"],
+      "processedBy": [
+        "sys.dagster",
+        "sys.trino",
+        "sys.nessie"
+      ],
       "description": "Звёздная схема, суррогатные ключи, SCD2. Именуется по бизнес-домену.",
-      "does": ["джойны", "агрегации", "бизнес-логика", "домены"],
-      "doesNot": ["форматирование под конкретный отчёт"]
+      "does": [
+        "джойны",
+        "агрегации",
+        "бизнес-логика",
+        "домены"
+      ],
+      "doesNot": [
+        "форматирование под конкретный отчёт"
+      ]
     },
     {
       "id": "layer.gold",
@@ -296,13 +454,25 @@
       "catalog": "iceberg",
       "nessieRef": "main, только CI",
       "bucket": "dp-gold",
-      "prefixes": ["{domain}_pdim__", "{domain}_pfct__", "{domain}_exp__"],
+      "prefixes": [
+        "{domain}_pdim__",
+        "{domain}_pfct__",
+        "{domain}_exp__"
+      ],
       "repo": "dp-transform",
       "storedIn": "sys.ceph",
-      "processedBy": ["sys.dagster", "sys.trino"],
+      "processedBy": [
+        "sys.dagster",
+        "sys.trino",
+        "sys.nessie"
+      ],
       "description": "Витрины для BI, только чтение. Публикуется в main только через CI.",
-      "does": ["денормализация под потребность"],
-      "doesNot": ["тяжёлые вычисления — их место в Silver"]
+      "does": [
+        "денормализация под потребность"
+      ],
+      "doesNot": [
+        "тяжёлые вычисления — их место в Silver"
+      ]
     },
     {
       "id": "layer.sandbox",
@@ -313,23 +483,47 @@
       "catalog": "iceberg_sandbox",
       "nessieRef": "sandbox/{login}",
       "bucket": "dp-sandbox",
-      "prefixes": ["{login}_"],
+      "prefixes": [
+        "{login}_"
+      ],
       "storedIn": "sys.ceph",
-      "processedBy": ["sys.jupyter", "sys.trino"],
-      "description": "Личные эксперименты с TTL. Структура слоёв повторяет платформу — переезд на платформу это смена destination.",
-      "does": ["личные эксперименты", "TTL"],
-      "doesNot": ["потребители не читают sandbox"]
+      "processedBy": [
+        "sys.jupyter",
+        "sys.trino",
+        "sys.nessie"
+      ],
+      "description": "Станция на ответвлении ленты: личные эксперименты с TTL в ref sandbox/{login}. Здесь работает робот — персональная нода сотрудника.",
+      "does": [
+        "личные эксперименты",
+        "TTL"
+      ],
+      "doesNot": [
+        "потребители не читают sandbox"
+      ]
     },
-
     {
       "id": "emp.data-engineer",
       "kind": "employee",
       "name": "Анна — инженер данных",
       "domainId": "dom.data",
       "role": "Data Engineer",
-      "skills": ["dbt", "Dagster", "dlt", "SQL"],
-      "assistant": { "name": "Помощник DE", "capabilities": ["проверка имени по стандарту", "разбор падений ассетов"] },
-      "context": ["MR в dp-transform: corpgov_dim__transition", "Сэндбокс sandbox/anna"]
+      "skills": [
+        "dbt",
+        "Dagster",
+        "dlt",
+        "SQL"
+      ],
+      "assistant": {
+        "name": "Помощник DE",
+        "capabilities": [
+          "проверка имени по стандарту",
+          "разбор падений ассетов"
+        ]
+      },
+      "context": [
+        "MR в dp-transform: corpgov_dim__transition",
+        "Эксперимент в sandbox/anna — робот-нода на станции Sandbox"
+      ]
     },
     {
       "id": "emp.product-owner",
@@ -337,9 +531,21 @@
       "name": "Игорь — владелец продукта",
       "domainId": "dom.data",
       "role": "Data Product Owner",
-      "skills": ["Контракты данных", "Ревью моделей"],
-      "assistant": { "name": "Помощник PO", "capabilities": ["сводка изменений релиза", "проверка совместимости контракта"] },
-      "context": ["Ревью MR", "Канал dp-changelog"]
+      "skills": [
+        "Контракты данных",
+        "Ревью моделей"
+      ],
+      "assistant": {
+        "name": "Помощник PO",
+        "capabilities": [
+          "сводка изменений релиза",
+          "проверка совместимости контракта"
+        ]
+      },
+      "context": [
+        "Ревью MR",
+        "Канал dp-changelog"
+      ]
     },
     {
       "id": "emp.analyst",
@@ -347,11 +553,20 @@
       "name": "Мария — аналитик",
       "domainId": "dom.corpgov",
       "role": "BI Analyst",
-      "skills": ["SQL", "BI"],
-      "assistant": { "name": "Помощник аналитика", "capabilities": ["поиск витрин в каталоге"] },
-      "context": ["Отчёт по переходам"]
+      "skills": [
+        "SQL",
+        "BI"
+      ],
+      "assistant": {
+        "name": "Помощник аналитика",
+        "capabilities": [
+          "поиск витрин в каталоге"
+        ]
+      },
+      "context": [
+        "Отчёт по переходам"
+      ]
     },
-
     {
       "id": "dp.stg-eva-transitions",
       "kind": "dataProduct",
@@ -361,12 +576,21 @@
       "domainId": "dom.data",
       "producedBy": "layer.bronze",
       "version": "1.4.0",
-      "sources": ["sys.eva"],
-      "quality": { "checks": 12, "passed": 12 },
+      "sources": [
+        "sys.eva"
+      ],
+      "quality": {
+        "checks": 12,
+        "passed": 12
+      },
       "owner": "emp.data-engineer",
       "description": "1:1 к источнику: рейминг, ретайп, нормализация единиц (минуты → часы).",
       "history": [
-        { "at": "2026-09-06", "author": "emp.data-engineer", "change": "Джойн двух источников и string_agg вынесены в Silver — stg_ снова 1:1" }
+        {
+          "at": "2026-09-06",
+          "author": "emp.data-engineer",
+          "change": "Джойн двух источников и string_agg вынесены в Silver — stg_ снова 1:1"
+        }
       ]
     },
     {
@@ -378,8 +602,13 @@
       "domainId": "dom.corpgov",
       "producedBy": "layer.silver",
       "version": "2.1.0",
-      "sources": ["dp.stg-eva-transitions"],
-      "quality": { "checks": 18, "passed": 18 },
+      "sources": [
+        "dp.stg-eva-transitions"
+      ],
+      "quality": {
+        "checks": 18,
+        "passed": 18
+      },
       "owner": "emp.data-engineer",
       "description": "Суррогатные ключи, SCD2. Агрегация переходов, перенесённая из staging."
     },
@@ -392,8 +621,13 @@
       "domainId": "dom.corpgov",
       "producedBy": "layer.gold",
       "version": "1.2.0",
-      "sources": ["dp.corpgov-dim-transition"],
-      "quality": { "checks": 9, "passed": 9 },
+      "sources": [
+        "dp.corpgov-dim-transition"
+      ],
+      "quality": {
+        "checks": 9,
+        "passed": 9
+      },
       "owner": "emp.product-owner",
       "description": "Денормализованная витрина под отчётность корпоративного управления. Только чтение."
     },
@@ -406,7 +640,9 @@
       "domainId": "dom.data",
       "producedBy": "layer.landing",
       "version": "—",
-      "sources": ["sys.extapi"],
+      "sources": [
+        "sys.extapi"
+      ],
       "description": "As-is копия ответа API, загружается dlt по расписанию."
     },
     {
@@ -418,8 +654,13 @@
       "domainId": "dom.data",
       "producedBy": "layer.bronze",
       "version": "1.0.0",
-      "sources": ["dp.landing-extapi-requests"],
-      "quality": { "checks": 6, "passed": 6 }
+      "sources": [
+        "dp.landing-extapi-requests"
+      ],
+      "quality": {
+        "checks": 6,
+        "passed": 6
+      }
     },
     {
       "id": "dp.corpgov-fct-request",
@@ -430,10 +671,14 @@
       "domainId": "dom.corpgov",
       "producedBy": "layer.silver",
       "version": "1.0.0",
-      "sources": ["dp.stg-extapi-requests"],
-      "quality": { "checks": 8, "passed": 8 }
+      "sources": [
+        "dp.stg-extapi-requests"
+      ],
+      "quality": {
+        "checks": 8,
+        "passed": 8
+      }
     },
-
     {
       "id": "ctr.corpgov-transitions",
       "kind": "contract",
@@ -442,32 +687,185 @@
       "providerId": "sys.istok",
       "consumerId": "sys.bi",
       "interface": "sql",
-      "sla": { "freshness": "T+1 (пример)", "availability": "99.5% (пример)" },
+      "sla": {
+        "freshness": "T+1 (пример)",
+        "availability": "99.5% (пример)"
+      },
       "schemaVersion": "1.x",
-      "allowedRoute": ["layer.gold", "sys.nessie", "sys.istok", "sys.bi"],
+      "allowedRoute": [
+        "layer.gold",
+        "sys.cube",
+        "sys.istok",
+        "sys.bi"
+      ],
       "owner": "emp.product-owner",
       "description": "Схема и SLA в dp-contracts, проверка datacontract-cli. Изменение — по правилам совместимости контракта."
     },
-
-    { "id": "con.eva-trino", "kind": "connector", "name": "Федеративный каталог EVA", "fromId": "sys.eva", "toId": "sys.trino", "interface": "sql", "technology": "Trino-каталог {type}__{srv}__{system}" },
-    { "id": "con.extapi-dlt", "kind": "connector", "name": "Выгрузка по API", "fromId": "sys.extapi", "toId": "sys.dlt", "interface": "api", "technology": "dlt source" },
-    { "id": "con.dlt-ceph", "kind": "connector", "name": "Запись в Landing", "fromId": "sys.dlt", "toId": "sys.ceph", "interface": "file", "technology": "iceberg_landing" },
-    { "id": "con.trino-ceph", "kind": "connector", "name": "Таблицы Iceberg", "fromId": "sys.trino", "toId": "sys.ceph", "interface": "file", "technology": "Iceberg / S3" },
-    { "id": "con.trino-nessie", "kind": "connector", "name": "Каталог и ветки данных", "fromId": "sys.trino", "toId": "sys.nessie", "interface": "api", "technology": "Nessie catalog" },
-    { "id": "con.dagster-trino", "kind": "connector", "name": "dbt run", "fromId": "sys.dagster", "toId": "sys.trino", "interface": "sql", "technology": "dbt-trino" },
-    { "id": "con.dagster-dlt", "kind": "connector", "name": "Запуск пайплайнов", "fromId": "sys.dagster", "toId": "sys.dlt", "interface": "api", "technology": "schedules / sensors" },
-    { "id": "con.gitlab-dagster", "kind": "connector", "name": "Выкладка образа", "fromId": "sys.gitlab", "toId": "sys.dagster", "interface": "api", "technology": "тег образа + release manifest" },
-    { "id": "con.traefik-dagster", "kind": "connector", "name": "UI Dagster", "fromId": "sys.traefik", "toId": "sys.dagster", "interface": "ui" },
-    { "id": "con.traefik-jupyter", "kind": "connector", "name": "UI JupyterHub", "fromId": "sys.traefik", "toId": "sys.jupyter", "interface": "ui" },
-    { "id": "con.jupyter-trino", "kind": "connector", "name": "Запросы из ноутбуков", "fromId": "sys.jupyter", "toId": "sys.trino", "interface": "sql" },
-    { "id": "con.dagster-infisical", "kind": "connector", "name": "Секреты пайплайнов", "fromId": "sys.dagster", "toId": "sys.infisical", "interface": "api" },
-    { "id": "con.trino-observability", "kind": "connector", "name": "Метрики и логи", "fromId": "sys.trino", "toId": "sys.observability", "interface": "stream", "technology": "Prometheus / Loki" },
-    { "id": "con.dagster-observability", "kind": "connector", "name": "Логи запусков", "fromId": "sys.dagster", "toId": "sys.observability", "interface": "stream", "technology": "Loki" },
-    { "id": "con.trino-istok", "kind": "connector", "name": "Gold для ИСТОК", "fromId": "sys.trino", "toId": "sys.istok", "interface": "sql", "technology": "каталог iceberg (Gold)" },
-    { "id": "con.istok-bi", "kind": "connector", "name": "SQL-доступ отчётности", "fromId": "sys.istok", "toId": "sys.bi", "interface": "sql" },
-    { "id": "con.metadata-trino", "kind": "connector", "name": "Сбор метаданных", "fromId": "sys.metadata", "toId": "sys.trino", "interface": "api", "technology": "ingestion" },
-    { "id": "con.metadata-istok", "kind": "connector", "name": "Каталог для ИСТОК", "fromId": "sys.metadata", "toId": "sys.istok", "interface": "mcp" },
-
+    {
+      "id": "con.eva-trino",
+      "kind": "connector",
+      "name": "Федеративный каталог EVA",
+      "fromId": "sys.eva",
+      "toId": "sys.trino",
+      "interface": "sql",
+      "technology": "Trino-каталог {type}__{srv}__{system}"
+    },
+    {
+      "id": "con.extapi-dlt",
+      "kind": "connector",
+      "name": "Выгрузка по API",
+      "fromId": "sys.extapi",
+      "toId": "sys.dlt",
+      "interface": "api",
+      "technology": "dlt source"
+    },
+    {
+      "id": "con.dlt-ceph",
+      "kind": "connector",
+      "name": "Запись в Landing",
+      "fromId": "sys.dlt",
+      "toId": "sys.ceph",
+      "interface": "file",
+      "technology": "iceberg_landing"
+    },
+    {
+      "id": "con.trino-ceph",
+      "kind": "connector",
+      "name": "Таблицы Iceberg",
+      "fromId": "sys.trino",
+      "toId": "sys.ceph",
+      "interface": "file",
+      "technology": "Iceberg / S3"
+    },
+    {
+      "id": "con.trino-nessie",
+      "kind": "connector",
+      "name": "Каталог и ветки данных",
+      "fromId": "sys.trino",
+      "toId": "sys.nessie",
+      "interface": "api",
+      "technology": "Nessie catalog"
+    },
+    {
+      "id": "con.dagster-trino",
+      "kind": "connector",
+      "name": "dbt run",
+      "fromId": "sys.dagster",
+      "toId": "sys.trino",
+      "interface": "sql",
+      "technology": "dbt-trino"
+    },
+    {
+      "id": "con.dagster-dlt",
+      "kind": "connector",
+      "name": "Запуск пайплайнов",
+      "fromId": "sys.dagster",
+      "toId": "sys.dlt",
+      "interface": "api",
+      "technology": "schedules / sensors"
+    },
+    {
+      "id": "con.gitlab-dagster",
+      "kind": "connector",
+      "name": "Выкладка образа",
+      "fromId": "sys.gitlab",
+      "toId": "sys.dagster",
+      "interface": "api",
+      "technology": "тег образа + release manifest"
+    },
+    {
+      "id": "con.traefik-dagster",
+      "kind": "connector",
+      "name": "UI Dagster",
+      "fromId": "sys.traefik",
+      "toId": "sys.dagster",
+      "interface": "ui"
+    },
+    {
+      "id": "con.traefik-jupyter",
+      "kind": "connector",
+      "name": "UI JupyterHub",
+      "fromId": "sys.traefik",
+      "toId": "sys.jupyter",
+      "interface": "ui"
+    },
+    {
+      "id": "con.jupyter-trino",
+      "kind": "connector",
+      "name": "Запросы из ноутбуков",
+      "fromId": "sys.jupyter",
+      "toId": "sys.trino",
+      "interface": "sql"
+    },
+    {
+      "id": "con.dagster-infisical",
+      "kind": "connector",
+      "name": "Секреты пайплайнов",
+      "fromId": "sys.dagster",
+      "toId": "sys.infisical",
+      "interface": "api"
+    },
+    {
+      "id": "con.trino-observability",
+      "kind": "connector",
+      "name": "Метрики и логи",
+      "fromId": "sys.trino",
+      "toId": "sys.observability",
+      "interface": "stream",
+      "technology": "Prometheus / Loki"
+    },
+    {
+      "id": "con.dagster-observability",
+      "kind": "connector",
+      "name": "Логи запусков",
+      "fromId": "sys.dagster",
+      "toId": "sys.observability",
+      "interface": "stream",
+      "technology": "Loki"
+    },
+    {
+      "id": "con.trino-cube",
+      "kind": "connector",
+      "name": "Gold для Cube",
+      "fromId": "sys.trino",
+      "toId": "sys.cube",
+      "interface": "sql",
+      "technology": "каталог iceberg (Gold)"
+    },
+    {
+      "id": "con.cube-istok",
+      "kind": "connector",
+      "name": "Выдача продуктов",
+      "fromId": "sys.cube",
+      "toId": "sys.istok",
+      "interface": "api",
+      "technology": "REST / GraphQL / SQL API"
+    },
+    {
+      "id": "con.istok-bi",
+      "kind": "connector",
+      "name": "SQL-доступ отчётности",
+      "fromId": "sys.istok",
+      "toId": "sys.bi",
+      "interface": "sql"
+    },
+    {
+      "id": "con.metadata-trino",
+      "kind": "connector",
+      "name": "Сбор метаданных",
+      "fromId": "sys.metadata",
+      "toId": "sys.trino",
+      "interface": "api",
+      "technology": "ingestion"
+    },
+    {
+      "id": "con.metadata-istok",
+      "kind": "connector",
+      "name": "Каталог для ИСТОК",
+      "fromId": "sys.metadata",
+      "toId": "sys.istok",
+      "interface": "mcp"
+    },
     {
       "id": "proc.pattern-a",
       "kind": "process",
@@ -475,15 +873,75 @@
       "domainId": "dom.data",
       "category": "delivery",
       "owner": "emp.product-owner",
-      "description": "Федеративный источник: данные читаются у источника через Trino, без копии в Landing, и проходят Bronze → Silver → Gold → ИСТОК → отчётность.",
+      "description": "Федеративный источник: данные читаются у источника через Trino, без склада Landing. По ленте Nessie: Bronze → Silver → Gold, затем Cube.dev отгружает витрину, ИСТОК проверяет контракт, отчётность получает.",
       "steps": [
-        { "id": "source", "name": "Источник подключён Trino-каталогом", "actorId": "sys.eva", "duration": 1.5 },
-        { "id": "bronze", "name": "stg_eva__transitions: dedup, type cast", "actorId": "layer.bronze", "transport": "pipe", "via": ["sys.dagster", "sys.trino"], "carries": "dp.stg-eva-transitions", "flow": "data", "duration": 3 },
-        { "id": "silver", "name": "corpgov_dim__transition: ключи, SCD2", "actorId": "layer.silver", "via": ["sys.dagster", "sys.trino"], "carries": "dp.corpgov-dim-transition", "flow": "data", "duration": 4 },
-        { "id": "gold", "name": "corpgov_exp__transitions: витрина", "actorId": "layer.gold", "via": ["sys.dagster", "sys.trino"], "carries": "dp.corpgov-exp-transitions", "flow": "data", "duration": 3 },
-        { "id": "merge", "name": "Merge ref dev → main (только CI)", "actorId": "sys.nessie", "via": ["sys.gitlab"], "carries": "dp.corpgov-exp-transitions", "flow": "nessie", "duration": 2 },
-        { "id": "contract", "name": "Проверка контракта и прав", "actorId": "sys.istok", "carries": "dp.corpgov-exp-transitions", "duration": 2 },
-        { "id": "deliver", "name": "Доставка в отчётность", "actorId": "sys.bi", "duration": 2 }
+        {
+          "id": "source",
+          "name": "Источник подключён Trino-каталогом",
+          "actorId": "sys.eva",
+          "duration": 1.5
+        },
+        {
+          "id": "bronze",
+          "name": "stg_eva__transitions: dedup, type cast",
+          "actorId": "layer.bronze",
+          "transport": "pipe",
+          "via": [
+            "sys.dagster",
+            "sys.trino",
+            "sys.nessie"
+          ],
+          "carries": "dp.stg-eva-transitions",
+          "flow": "data",
+          "duration": 3
+        },
+        {
+          "id": "silver",
+          "name": "corpgov_dim__transition: ключи, SCD2",
+          "actorId": "layer.silver",
+          "via": [
+            "sys.dagster",
+            "sys.trino",
+            "sys.nessie"
+          ],
+          "carries": "dp.corpgov-dim-transition",
+          "flow": "data",
+          "duration": 3.5
+        },
+        {
+          "id": "gold",
+          "name": "corpgov_exp__transitions → merge в main (CI)",
+          "actorId": "layer.gold",
+          "via": [
+            "sys.dagster",
+            "sys.trino",
+            "sys.nessie",
+            "sys.gitlab"
+          ],
+          "carries": "dp.corpgov-exp-transitions",
+          "flow": "nessie",
+          "duration": 3
+        },
+        {
+          "id": "load",
+          "name": "Cube.dev: погрузка в грузовик",
+          "actorId": "sys.cube",
+          "carries": "dp.corpgov-exp-transitions",
+          "duration": 2.5
+        },
+        {
+          "id": "contract",
+          "name": "Проверка контракта и прав",
+          "actorId": "sys.istok",
+          "carries": "dp.corpgov-exp-transitions",
+          "duration": 2
+        },
+        {
+          "id": "deliver",
+          "name": "Доставка в отчётность",
+          "actorId": "sys.bi",
+          "duration": 2
+        }
       ]
     },
     {
@@ -493,13 +951,59 @@
       "domainId": "dom.data",
       "category": "ingestion",
       "owner": "emp.data-engineer",
-      "description": "Источник без SQL-интерфейса: dlt копирует данные в Landing по расписанию, дальше — те же слои.",
+      "description": "Источник без SQL-интерфейса: dlt привозит данные на склад Landing, дальше по ленте Nessie — Bronze и Silver.",
       "steps": [
-        { "id": "api", "name": "Выдача данных по API", "actorId": "sys.extapi", "duration": 1.5 },
-        { "id": "dlt", "name": "dlt-пайплайн по расписанию", "actorId": "sys.dlt", "via": ["sys.dagster", "sys.infisical"], "flow": "data", "duration": 3 },
-        { "id": "landing", "name": "Сырые данные as-is → iceberg_landing", "actorId": "layer.landing", "carries": "dp.landing-extapi-requests", "flow": "data", "duration": 2 },
-        { "id": "bronze", "name": "stg_extapi__requests", "actorId": "layer.bronze", "via": ["sys.dagster", "sys.trino"], "carries": "dp.stg-extapi-requests", "flow": "data", "duration": 3 },
-        { "id": "silver", "name": "corpgov_fct__request", "actorId": "layer.silver", "via": ["sys.dagster", "sys.trino"], "carries": "dp.corpgov-fct-request", "flow": "data", "duration": 3 }
+        {
+          "id": "api",
+          "name": "Выдача данных по API",
+          "actorId": "sys.extapi",
+          "duration": 1.5
+        },
+        {
+          "id": "dlt",
+          "name": "dlt-пайплайн по расписанию",
+          "actorId": "sys.dlt",
+          "via": [
+            "sys.dagster",
+            "sys.infisical"
+          ],
+          "flow": "data",
+          "duration": 3
+        },
+        {
+          "id": "landing",
+          "name": "Разгрузка на склад Landing as-is",
+          "actorId": "layer.landing",
+          "carries": "dp.landing-extapi-requests",
+          "flow": "data",
+          "duration": 2
+        },
+        {
+          "id": "bronze",
+          "name": "stg_extapi__requests",
+          "actorId": "layer.bronze",
+          "via": [
+            "sys.dagster",
+            "sys.trino",
+            "sys.nessie"
+          ],
+          "carries": "dp.stg-extapi-requests",
+          "flow": "data",
+          "duration": 3
+        },
+        {
+          "id": "silver",
+          "name": "corpgov_fct__request",
+          "actorId": "layer.silver",
+          "via": [
+            "sys.dagster",
+            "sys.trino",
+            "sys.nessie"
+          ],
+          "carries": "dp.corpgov-fct-request",
+          "flow": "data",
+          "duration": 3
+        }
       ]
     },
     {
@@ -511,13 +1015,60 @@
       "owner": "emp.product-owner",
       "description": "Изменение почти всегда проходит все три флоу. Пропуск одного — типичная причина «в Git готово, а в проде нет».",
       "steps": [
-        { "id": "local", "name": "Правка в личной ветке, локальные слои", "actorId": "emp.data-engineer", "flow": "git", "duration": 2 },
-        { "id": "mr", "name": "MR в dp-transform", "actorId": "sys.gitlab", "flow": "git", "duration": 1.5 },
-        { "id": "review", "name": "Ревью MR", "actorId": "emp.product-owner", "manual": true, "flow": "git", "duration": 5 },
-        { "id": "ci", "name": "CI: тесты, проверка имён, образ", "actorId": "sys.gitlab", "flow": "git", "duration": 2 },
-        { "id": "rebuild", "name": "Пересборка в своей ref → merge в main", "actorId": "sys.nessie", "via": ["sys.dagster", "sys.trino"], "flow": "nessie", "duration": 3 },
-        { "id": "release", "name": "Тег образа и release manifest", "actorId": "sys.gitlab", "flow": "release", "duration": 1.5 },
-        { "id": "deploy", "name": "Выкладка образа в Dagster", "actorId": "sys.dagster", "flow": "release", "duration": 2 },
+        {
+          "id": "local",
+          "name": "Правка в личной ветке, локальные слои",
+          "actorId": "emp.data-engineer",
+          "flow": "git",
+          "duration": 2
+        },
+        {
+          "id": "mr",
+          "name": "MR в dp-transform",
+          "actorId": "sys.gitlab",
+          "flow": "git",
+          "duration": 1.5
+        },
+        {
+          "id": "review",
+          "name": "Ревью MR",
+          "actorId": "emp.product-owner",
+          "manual": true,
+          "flow": "git",
+          "duration": 5
+        },
+        {
+          "id": "ci",
+          "name": "CI: тесты, проверка имён, образ",
+          "actorId": "sys.gitlab",
+          "flow": "git",
+          "duration": 2
+        },
+        {
+          "id": "rebuild",
+          "name": "Пересборка в своей ref на ленте → merge в main",
+          "actorId": "sys.nessie",
+          "via": [
+            "sys.dagster",
+            "sys.trino"
+          ],
+          "flow": "nessie",
+          "duration": 3
+        },
+        {
+          "id": "release",
+          "name": "Тег образа и release manifest",
+          "actorId": "sys.gitlab",
+          "flow": "release",
+          "duration": 1.5
+        },
+        {
+          "id": "deploy",
+          "name": "Выкладка образа в Dagster",
+          "actorId": "sys.dagster",
+          "flow": "release",
+          "duration": 2
+        },
         {
           "id": "notify",
           "name": "Сообщение потребителям в dp-changelog",
@@ -529,13 +1080,57 @@
         }
       ]
     },
-
-    { "id": "rel.po-owns-exp", "kind": "relationship", "type": "owns", "fromId": "emp.product-owner", "toId": "dp.corpgov-exp-transitions" },
-    { "id": "rel.de-works-dagster", "kind": "relationship", "type": "worksWith", "fromId": "emp.data-engineer", "toId": "sys.dagster" },
-    { "id": "rel.de-works-jupyter", "kind": "relationship", "type": "worksWith", "fromId": "emp.data-engineer", "toId": "sys.jupyter" },
-    { "id": "rel.analyst-works-bi", "kind": "relationship", "type": "worksWith", "fromId": "emp.analyst", "toId": "sys.bi" },
-    { "id": "rel.metadata-describes-exp", "kind": "relationship", "type": "describes", "fromId": "sys.metadata", "toId": "dp.corpgov-exp-transitions" },
-    { "id": "rel.de-po-context", "kind": "relationship", "type": "worksWith", "fromId": "emp.data-engineer", "toId": "emp.product-owner", "label": "MR на ревью" },
-    { "id": "rel.analyst-po-context", "kind": "relationship", "type": "worksWith", "fromId": "emp.analyst", "toId": "emp.product-owner", "label": "запросы на изменения витрины" }
+    {
+      "id": "rel.po-owns-exp",
+      "kind": "relationship",
+      "type": "owns",
+      "fromId": "emp.product-owner",
+      "toId": "dp.corpgov-exp-transitions"
+    },
+    {
+      "id": "rel.de-works-dagster",
+      "kind": "relationship",
+      "type": "worksWith",
+      "fromId": "emp.data-engineer",
+      "toId": "sys.dagster"
+    },
+    {
+      "id": "rel.analyst-works-bi",
+      "kind": "relationship",
+      "type": "worksWith",
+      "fromId": "emp.analyst",
+      "toId": "sys.bi"
+    },
+    {
+      "id": "rel.metadata-describes-exp",
+      "kind": "relationship",
+      "type": "describes",
+      "fromId": "sys.metadata",
+      "toId": "dp.corpgov-exp-transitions"
+    },
+    {
+      "id": "rel.de-po-context",
+      "kind": "relationship",
+      "type": "worksWith",
+      "fromId": "emp.data-engineer",
+      "toId": "emp.product-owner",
+      "label": "MR на ревью"
+    },
+    {
+      "id": "rel.analyst-po-context",
+      "kind": "relationship",
+      "type": "worksWith",
+      "fromId": "emp.analyst",
+      "toId": "emp.product-owner",
+      "label": "запросы на изменения витрины"
+    },
+    {
+      "id": "rel.de-node-sandbox",
+      "kind": "relationship",
+      "type": "worksWith",
+      "fromId": "emp.data-engineer",
+      "toId": "layer.sandbox",
+      "label": "робот-нода в сэндбоксе"
+    }
   ]
 }

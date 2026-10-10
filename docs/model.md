@@ -17,7 +17,7 @@ flowchart LR
     sys_infisical["Infisical"]
     sys_observability["Наблюдаемость"]
     sys_metadata["OpenMetadata"]
-    sys_nit["Нить"]
+    sys_cube["Cube.dev"]
     sys_istok["ИСТОК"]
     layer_landing[("Landing · iceberg_landing")]
     layer_bronze[("Bronze · iceberg / iceberg_dev")]
@@ -62,17 +62,18 @@ flowchart LR
   sys_dagster -- "api" --> sys_infisical
   sys_trino -- "stream" --> sys_observability
   sys_dagster -- "stream" --> sys_observability
-  sys_trino -- "sql" --> sys_istok
+  sys_trino -- "sql" --> sys_cube
+  sys_cube -- "api" --> sys_istok
   sys_istok -- "sql" --> sys_bi
   sys_metadata -- "api" --> sys_trino
   sys_metadata -- "mcp" --> sys_istok
   emp_product_owner -. "owns" .-> dp_corpgov_exp_transitions
   emp_data_engineer -. "worksWith" .-> sys_dagster
-  emp_data_engineer -. "worksWith" .-> sys_jupyter
   emp_analyst -. "worksWith" .-> sys_bi
   sys_metadata -. "describes" .-> dp_corpgov_exp_transitions
   emp_data_engineer -. "MR на ревью" .-> emp_product_owner
   emp_analyst -. "запросы на изменения витрины" .-> emp_product_owner
+  emp_data_engineer -. "робот-нода в сэндбоксе" .-> layer_sandbox
   dp_corpgov_exp_transitions == "Контракт: Витрина переходов → Отчётность" ==> sys_bi
 ```
 
@@ -85,14 +86,14 @@ sequenceDiagram
   participant layer_bronze as Bronze
   participant layer_silver as Silver
   participant layer_gold as Gold
-  participant sys_nessie as Nessie
+  participant sys_cube as Cube.dev
   participant sys_istok as ИСТОК
   participant sys_bi as Отчётность
   sys_eva->>layer_bronze: Источник подключён Trino-каталогом
   layer_bronze->>layer_silver: stg_eva__transitions: dedup, type cast (Переходы EVA (staging))
   layer_silver->>layer_gold: corpgov_dim__transition: ключи, SCD2 (Измерение «Переход»)
-  layer_gold->>sys_nessie: corpgov_exp__transitions: витрина (Витрина переходов)
-  sys_nessie->>sys_istok: Merge ref dev → main (только CI) (Витрина переходов)
+  layer_gold->>sys_cube: corpgov_exp__transitions → merge в main (CI) (Витрина переходов)
+  sys_cube->>sys_istok: Cube.dev: погрузка в грузовик (Витрина переходов)
   sys_istok->>sys_bi: Проверка контракта и прав (Витрина переходов)
   Note over sys_bi: Доставка в отчётность
 ```
@@ -109,7 +110,7 @@ sequenceDiagram
   participant layer_silver as Silver
   sys_extapi->>sys_dlt: Выдача данных по API
   sys_dlt->>layer_landing: dlt-пайплайн по расписанию
-  layer_landing->>layer_bronze: Сырые данные as-is → iceberg_landing (Заявки из внешнего API (сырые))
+  layer_landing->>layer_bronze: Разгрузка на склад Landing as-is (Заявки из внешнего API (сырые))
   layer_bronze->>layer_silver: stg_extapi__requests (Заявки (staging))
   Note over layer_silver: corpgov_fct__request
 ```
@@ -128,7 +129,7 @@ sequenceDiagram
   sys_gitlab->>emp_product_owner: MR в dp-transform
   emp_product_owner->>sys_gitlab: Ревью MR
   sys_gitlab->>sys_nessie: CI: тесты, проверка имён, образ
-  sys_nessie->>sys_gitlab: Пересборка в своей ref → merge в main
+  sys_nessie->>sys_gitlab: Пересборка в своей ref на ленте → merge в main
   sys_gitlab->>sys_dagster: Тег образа и release manifest
   sys_dagster->>emp_product_owner: Выкладка образа в Dagster
   Note over emp_product_owner: Сообщение потребителям в dp-changelog ✋

@@ -21,14 +21,15 @@ export const Archetype = z.enum([
   'archive', // metadata catalog
   'tower', // context infrastructure — Нить
   'employeeNode', // person + assistant
-  'layerHall', // Medallion layer
+  'robotNode', // personal node at work — a robot at a station
+  'beltStation', // Medallion layer station over the Nessie belt
+  'loadingDock', // Cube.dev — forklifts load products into trucks
   'queryHub', // Trino
   'controlTower', // Dagster
   'silos', // Ceph RGW
-  'switchyard', // Nessie
   'ingestDock', // dlt
   'lab', // JupyterHub
-  'gatehouse', // Traefik
+  'checkpoint', // Traefik — booth with a barrier on the road
   'vault', // Infisical
   'watchtower', // observability
 ]);
@@ -43,6 +44,8 @@ export const Placement = z.object({
   height: z.number().positive().optional(),
   /** Road node where vehicles load/unload for this object. */
   port: z.string().optional(),
+  /** Belt node where this object sits on a conveyor. */
+  beltNode: z.string().optional(),
   accent: z.string().optional(),
 });
 
@@ -60,6 +63,22 @@ export const SpaceModel = z.object({
   districts: z.array(DistrictArea),
   roads: z.object({ nodes: z.array(RoadNode), edges: z.array(RoadEdge) }),
   placements: z.array(Placement),
+  /**
+   * Conveyor belts — a network separate from roads. The belt is itself an
+   * entity (Nessie): cargo moves between stations along it, not by truck.
+   */
+  belts: z
+    .array(
+      z.object({
+        id: z.string(),
+        entityId: EntityId,
+        nodes: z.array(RoadNode),
+        edges: z.array(RoadEdge),
+        /** Ordered node ids used for continuous decorative flow. */
+        loops: z.array(z.array(z.string())).default([]),
+      }),
+    )
+    .default([]),
   /** Purely decorative props — trees, containers, solar fields. */
   props: z
     .array(z.object({ type: z.enum(['tree', 'containers', 'solar', 'tank', 'drone']), at: Vec2, rotation: z.number().default(0) }))

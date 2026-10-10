@@ -14,6 +14,6 @@ describe('auto placement', () => {
       expect(hit, p.entityId).toBe(false);
     }
     const g = buildRoadGraph(next);
-    expect(shortestPath(g, placement.port!, 'm.gold')).not.toBeNull();
+    expect(shortestPath(g, placement.port!, 'm.cube')).not.toBeNull();
   });
 });

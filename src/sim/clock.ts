@@ -9,3 +9,8 @@ export const clock = { t: 0 };
 export const activity = {
   active: new Map<string, 'work' | 'manual'>(),
 };
+
+/** World positions [x, z] of vehicles this frame — e.g. for the КПП barrier. */
+export const traffic = {
+  vehicles: new Map<string, [number, number]>(),
+};

@@ -1,13 +1,14 @@
 import { Html } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type * as THREE from 'three';
-import { clock } from '@/sim/clock';
+import { clock, traffic } from '@/sim/clock';
 import { sampleRun, type Run } from '@/sim/engine';
 import { pathLength, samplePath } from '@/space/routing';
 import type { Vec2T } from '@/space/schema';
 import { useCity } from '@/store/city';
 import { LAYER_COLOR } from './archetypesDp';
+import { BELT_Y } from './Conveyor';
 import { C } from './look';
 
 const LANE = 0.6;
@@ -61,6 +62,7 @@ function RunTruck({ run }: { run: Run }) {
   const view = useCity((s) => s.view);
   const select = useCity((s) => s.select);
   const violation = run.phases.some((p) => p.routeViolation);
+  useEffect(() => () => void traffic.vehicles.delete(run.id), [run.id]);
   const cargoIds = run.phases.map((p) => p.cargoId).filter(Boolean);
 
   useFrame((_, dt) => {
@@ -68,6 +70,7 @@ function RunTruck({ run }: { run: Run }) {
     const s = sampleRun(run, clock.t, ctx);
     if (!s.vehicle) {
       g.current.visible = false;
+      traffic.vehicles.delete(run.id);
       return;
     }
     g.current.visible = true;
@@ -75,18 +78,23 @@ function RunTruck({ run }: { run: Run }) {
     heading.current = lerpAngle(heading.current, h, Math.min(dt * 10, 1));
     const ox = -Math.cos(heading.current) * LANE;
     const oz = Math.sin(heading.current) * LANE;
-    const pipe = !!s.vehicle.pipe;
-    g.current.position.set(s.vehicle.at[0] + (pipe ? 0 : ox), 0.08, s.vehicle.at[1] + (pipe ? 0 : oz));
+    const mode = s.vehicle.mode;
+    const onRoad = mode === 'truck';
+    g.current.position.set(s.vehicle.at[0] + (onRoad ? ox : 0), mode === 'belt' ? BELT_Y : 0.08, s.vehicle.at[1] + (onRoad ? oz : 0));
     g.current.rotation.y = heading.current;
+    if (onRoad) traffic.vehicles.set(run.id, [s.vehicle.at[0], s.vehicle.at[1]]);
+    else traffic.vehicles.delete(run.id);
     const truck = g.current.getObjectByName('truck');
     const orb = g.current.getObjectByName('pipe');
-    if (truck) truck.visible = !pipe;
+    const crate = g.current.getObjectByName('crate') as THREE.Mesh | undefined;
+    if (truck) truck.visible = onRoad;
     if (orb) {
-      orb.visible = pipe;
+      orb.visible = mode === 'pipe';
       orb.position.y = 0.9 + 0.15 * Math.sin(clock.t * 8);
     }
-    const box = g.current.getObjectByName('container') as THREE.Mesh | undefined;
-    if (box) {
+    if (crate) crate.visible = mode === 'belt';
+    for (const box of [g.current.getObjectByName('container') as THREE.Mesh | undefined, crate]) {
+      if (!box) continue;
       const m = box.material as THREE.MeshStandardMaterial;
       const cargo = s.vehicle.cargoId ? index.get(s.vehicle.cargoId) : undefined;
       const layer = cargo?.kind === 'dataProduct' && cargo.layerId ? index.get(cargo.layerId) : undefined;
@@ -121,6 +129,11 @@ function RunTruck({ run }: { run: Run }) {
           <meshStandardMaterial color={C.accent} emissive={C.accent} emissiveIntensity={0.8} />
         </mesh>
       </group>
+      {/* on the Nessie belt the cargo rides as a crate */}
+      <mesh name="crate" visible={false} position={[0, 0.32, 0]} castShadow>
+        <boxGeometry args={[0.8, 0.62, 0.8]} />
+        <meshStandardMaterial color={C.accent} metalness={0.35} roughness={0.4} />
+      </mesh>
       {selected && (
         <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.5, 1.75, 40]} />
@@ -146,6 +159,7 @@ function AmbientCar({ loop, offset, color }: { loop: Vec2T[]; offset: number; co
     const u = ((c.elapsedTime * 2.2) / L + offset) % 1;
     const s = samplePath(loop, u);
     g.current.position.set(s.at[0] - Math.cos(s.heading) * LANE, 0.08, s.at[1] + Math.sin(s.heading) * LANE);
+    traffic.vehicles.set(`ambient-${offset}`, [s.at[0], s.at[1]]);
     g.current.rotation.y = lerpAngle(g.current.rotation.y, s.heading, 0.2);
   });
   return (
@@ -170,8 +184,8 @@ function AmbientCar({ loop, offset, color }: { loop: Vec2T[]; offset: number; co
 }
 
 const LOOPS: string[][] = [
-  ['s.wj', 's.ej', 'e.bi', 'e.istok', 'm.ej', 'm.gold', 'm.silver', 'm.mid', 'm.bronze', 'm.landing', 'm.wj', 's.wj'],
-  ['n.wj', 'n.trino', 'n.mid', 'n.ceph', 'n.nessie', 'n.ej', 'm.ej', 'm.gold', 'm.silver', 'm.mid', 'n.mid', 'n.trino', 'n.wj'],
+  ['s.wj', 's.ej', 'e.bi', 'e.istok', 'm.ej', 'm.cube', 'm.bronze', 'm.lab', 'm.landing', 'm.dlt', 'm.wj', 's.wj'],
+  ['n.wj', 'n.trino', 'n.mid', 'n.ceph', 'n.obs', 'n.ej', 'm.ej', 'm.cube', 'm.bronze', 'm.lab', 'm.landing', 'm.dlt', 'm.wj', 'n.wj'],
   ['m.w', 'm.eva', 'm.api', 'm.wj', 'n.wj', 'n.git', 'n.w', 'm.w'],
 ];
 

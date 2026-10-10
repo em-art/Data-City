@@ -124,7 +124,7 @@ export function Factory({ w, d, entityId }: ArchetypeProps) {
 }
 
 /** Product warehouse — immutable versions as stacked containers. */
-export function Warehouse({ w, d, entityId }: ArchetypeProps) {
+export function Warehouse({ w, d, entityId, accent }: ArchetypeProps) {
   return (
     <group>
       <Plinth w={w} d={d} />
@@ -132,11 +132,12 @@ export function Warehouse({ w, d, entityId }: ArchetypeProps) {
       {/* barrel roof */}
       <mesh position={[0, 2.34, -d * 0.08]} rotation={[0, 0, Math.PI / 2]} castShadow>
         <cylinderGeometry args={[d * 0.4, d * 0.4, w * 0.94, 24, 1, false, 0, Math.PI]} />
-        <Mat c={C.roof} />
+        <Mat c={accent ?? C.roof} />
       </mesh>
       {[-0.3, 0, 0.3].map((k) => (
         <Panel key={k} size={[w * 0.15, 0.05, d * 0.5]} at={[w * k, 2.34 + d * 0.38, -d * 0.08]} c={C.glass} />
       ))}
+      {accent && <Panel size={[w * 0.94, 0.2, 0.05]} at={[0, 1.95, d * 0.32 + 0.01]} c={accent} />}
       <Doors n={4} width={1.2} z={d * 0.32 + 0.02} spacing={w * 0.22} h={1.4} />
       <Block size={[w * 0.96, 0.1, 0.9]} at={[0, 1.7, d * 0.32 + 0.45]} c={C.roofDark} r={0.04} />
       {/* pallets on the apron */}

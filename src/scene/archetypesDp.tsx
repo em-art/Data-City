@@ -7,7 +7,8 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import type * as THREE from 'three';
-import { activity, clock } from '@/sim/clock';
+import * as THREE_NS from 'three';
+import { activity, clock, traffic } from '@/sim/clock';
 import type { ArchetypeProps } from './archetypes';
 import { Block, C, Cyl, Mat, Panel } from './look';
 
@@ -56,59 +57,6 @@ function Doors({ n, z, spacing, width = 1.1, h = 1.3 }: { n: number; z: number; 
         </group>
       ))}
     </>
-  );
-}
-
-/** Medallion layer hall. Accent = layer colour; silver/gold are metallic. */
-export function LayerHall({ w, d, entityId, accent = C.accent }: ArchetypeProps) {
-  const rollers = useRef<THREE.Group>(null);
-  const metal = accent === LAYER_COLOR.gold || accent === LAYER_COLOR.silver ? 0.55 : 0.05;
-  useFrame((_, dt) => {
-    if (!rollers.current) return;
-    const v = isActive(entityId) ? 1.6 : 0.2;
-    rollers.current.children.forEach((c) => {
-      c.position.x += dt * v;
-      if (c.position.x > w * 0.42) c.position.x = -w * 0.42;
-    });
-  });
-  return (
-    <group>
-      <Plinth w={w} d={d} />
-      <Block size={[w * 0.9, 2.3, d * 0.62]} at={[0, 0.14, -d * 0.12]} c={C.wall} />
-      {/* barrel roof in layer colour */}
-      <mesh position={[0, 2.44, -d * 0.12]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[d * 0.31, d * 0.31, w * 0.9, 28, 1, false, 0, Math.PI]} />
-        <Mat c={accent} metal={metal} rough={metal > 0.3 ? 0.35 : 0.7} />
-      </mesh>
-      {[-0.28, 0, 0.28].map((k) => (
-        <Panel key={k} size={[w * 0.12, 0.05, d * 0.4]} at={[w * k, 2.44 + d * 0.3, -d * 0.12]} c={C.glass} />
-      ))}
-      {/* layer band and doors */}
-      <Panel size={[w * 0.9, 0.22, 0.05]} at={[0, 2.0, d * 0.19 + 0.01]} c={accent} />
-      <Doors n={3} z={d * 0.19 + 0.02} spacing={w * 0.28} />
-      {/* outdoor conveyor along the apron with crates in layer colour */}
-      <Block size={[w * 0.9, 0.14, 0.7]} at={[0, 0.5, d * 0.36]} c={C.roofDark} r={0.04} />
-      {[-0.4, 0, 0.4].map((k) => (
-        <Cyl key={k} r={0.05} h={0.36} at={[w * k, 0.14, d * 0.36]} c={C.door} seg={6} />
-      ))}
-      <group ref={rollers} position={[0, 0.64, d * 0.36]}>
-        {[0, 1, 2, 3].map((i) => (
-          <mesh key={i} position={[-w * 0.42 + i * w * 0.22, 0.17, 0]} castShadow>
-            <boxGeometry args={[0.5, 0.34, 0.5]} />
-            <Mat c={accent} metal={metal} rough={0.5} />
-          </mesh>
-        ))}
-      </group>
-      {/* layer pylon */}
-      <group position={[w * 0.44, 0.14, d * 0.2]}>
-        <Block size={[0.5, 3.4, 0.5]} c={C.wall} r={0.06} />
-        <mesh position={[0, 3.6, 0]}>
-          <boxGeometry args={[0.7, 0.7, 0.7]} />
-          <Mat c={accent} metal={metal} rough={0.35} />
-        </mesh>
-      </group>
-      <Beacon at={[-w * 0.42, 2.6, d * 0.18]} entityId={entityId} color={accent} />
-    </group>
   );
 }
 
@@ -236,63 +184,6 @@ export function Silos({ w, d, entityId }: ArchetypeProps) {
   );
 }
 
-/** Nessie — switchyard: main track, a dev branch and wagons merging back. */
-export function Switchyard({ w, d, entityId }: ArchetypeProps) {
-  const wagon = useRef<THREE.Group>(null);
-  const L = w * 0.85;
-  const branch: [number, number][] = [
-    [-L / 2, d * 0.32],
-    [-L / 4, d * 0.05],
-    [L / 4, d * 0.05],
-    [L / 2, d * 0.32],
-  ];
-  useFrame(() => {
-    if (!wagon.current) return;
-    const speed = isActive(entityId) ? 0.5 : 0.12;
-    const u = (clock.t * speed) % 1;
-    // traverse the branch polyline
-    const segs = branch.length - 1;
-    const k = u * segs;
-    const i = Math.min(Math.floor(k), segs - 1);
-    const f = k - i;
-    const a = branch[i]!;
-    const b = branch[i + 1]!;
-    wagon.current.position.set(a[0] + (b[0] - a[0]) * f, 0.3, a[1] + (b[1] - a[1]) * f);
-    wagon.current.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]) - Math.PI / 2;
-  });
-  const rail = (a: [number, number], b: [number, number], c: string, key: string) => {
-    const dx = b[0] - a[0];
-    const dz = b[1] - a[1];
-    return (
-      <mesh key={key} position={[(a[0] + b[0]) / 2, 0.2, (a[1] + b[1]) / 2]} rotation={[0, Math.atan2(dx, dz), 0]}>
-        <boxGeometry args={[0.35, 0.08, Math.hypot(dx, dz) + 0.2]} />
-        <meshStandardMaterial color={c} />
-      </mesh>
-    );
-  };
-  return (
-    <group>
-      <Plinth w={w} d={d} />
-      {/* main */}
-      {rail([-L / 2, d * 0.32], [L / 2, d * 0.32], C.accentDeep, 'main')}
-      {/* dev branch */}
-      {branch.slice(1).map((p, i) => rail(branch[i]!, p, '#b07ee8', `b${i}`))}
-      <group ref={wagon}>
-        <Block size={[0.9, 0.5, 0.5]} c={C.orange} r={0.06} />
-      </group>
-      <Block size={[w * 0.55, 2.0, d * 0.4]} at={[0, 0.14, -d * 0.22]} c={C.wall} />
-      <Panel size={[w * 0.5, 0.4, 0.05]} at={[0, 1.5, -d * 0.02 + 0.01]} c={C.glass} />
-      <Block size={[w * 0.6, 0.14, d * 0.44]} at={[0, 2.14, -d * 0.22]} c={C.roof} r={0.04} />
-      {/* signal mast */}
-      <group position={[-w * 0.38, 0.14, -d * 0.1]}>
-        <Cyl r={0.06} h={2.2} at={[0, 0, 0]} c={C.door} seg={6} />
-        <Block size={[0.35, 0.7, 0.2]} at={[0, 2.2, 0]} c={C.roofDark} r={0.05} />
-      </group>
-      <Beacon at={[-w * 0.38, 2.6, -d * 0.1]} entityId={entityId} color="#b07ee8" />
-    </group>
-  );
-}
-
 /** dlt — open ingestion dock with a conveyor carrying raw crates in. */
 export function IngestDock({ w, d, entityId }: ArchetypeProps) {
   const belt = useRef<THREE.Group>(null);
@@ -350,22 +241,6 @@ export function Lab({ w, d, entityId }: ArchetypeProps) {
       </group>
       <Panel size={[w * 0.85, 0.16, 0.05]} at={[0, 1.4, d * 0.35 + 0.02]} c={C.orange} />
       <Beacon at={[w * 0.36, 1.9, d * 0.3]} entityId={entityId} />
-    </group>
-  );
-}
-
-/** Traefik — gatehouse with an arch: the way in for people and UIs. */
-export function Gatehouse({ w, d, entityId }: ArchetypeProps) {
-  return (
-    <group>
-      <Plinth w={w} d={d} />
-      {[-1, 1].map((s) => (
-        <Block key={s} size={[0.4, 2.6, 0.4]} at={[s * w * 0.4, 0.14, 0]} c={C.wall} r={0.06} />
-      ))}
-      <Block size={[w * 0.95, 0.45, 0.5]} at={[0, 2.74, 0]} c={C.accent} r={0.08} />
-      <Block size={[w * 0.35, 1.2, d * 0.3]} at={[0, 0.14, -d * 0.25]} c={C.wall} />
-      <Panel size={[w * 0.3, 0.3, 0.05]} at={[0, 0.9, -d * 0.1 + 0.01]} c={C.glass} />
-      <Beacon at={[0, 3.4, 0]} entityId={entityId} />
     </group>
   );
 }
@@ -437,6 +312,235 @@ export function Watchtower({ w, d, entityId }: ArchetypeProps) {
         </mesh>
       </group>
       <Beacon at={[s, 5.5, s]} entityId={entityId} />
+    </group>
+  );
+}
+
+/**
+ * Medallion station over the Nessie belt (belt runs along local X).
+ * A stamping head works the cargo while the station is busy.
+ */
+export function BeltStation({ w, d, entityId, accent = C.accent }: ArchetypeProps) {
+  const head = useRef<THREE.Group>(null);
+  const metal = accent === LAYER_COLOR.gold || accent === LAYER_COLOR.silver ? 0.55 : 0.05;
+  useFrame(() => {
+    if (!head.current) return;
+    const busy = isActive(entityId);
+    head.current.position.y = 2.0 - (busy ? 0.35 * Math.max(0, Math.sin(clock.t * 7)) : 0);
+  });
+  return (
+    <group>
+      <Block size={[w * 0.9, 0.1, d]} c={C.wallShade} r={0.04} shadow={false} />
+      {/* pillars either side of the belt */}
+      {[-1, 1].map((s) => (
+        <Block key={s} size={[w * 0.75, 2.4, 0.45]} at={[0, 0.1, s * d * 0.4]} c={C.wall} r={0.08} />
+      ))}
+      {/* arched roof in layer colour */}
+      <mesh position={[0, 2.5, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[d * 0.45, d * 0.45, w * 0.8, 24, 1, false, 0, Math.PI]} />
+        <Mat c={accent} metal={metal} rough={metal > 0.3 ? 0.3 : 0.65} />
+      </mesh>
+      <Panel size={[w * 0.8, 0.12, 0.05]} at={[0, 2.25, d * 0.43]} c={accent} emissive={accent} glow={0.3} />
+      <group ref={head} position={[0, 2.0, 0]}>
+        <Block size={[1.0, 0.5, 0.9]} c={C.roofDark} r={0.06} />
+        <mesh position={[0, -0.05, 0]}>
+          <boxGeometry args={[0.8, 0.08, 0.7]} />
+          <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.5} />
+        </mesh>
+      </group>
+      <Beacon at={[w * 0.4, 2.7, d * 0.4]} entityId={entityId} color={accent} />
+    </group>
+  );
+}
+
+/** A personal node at work: robot arm with an assistant orb for a head. */
+export function RobotNode({ entityId }: ArchetypeProps) {
+  const torso = useRef<THREE.Group>(null);
+  const fore = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const busy = activity.active.has(entityId);
+    const k = busy ? 2.2 : 0.8;
+    if (torso.current) torso.current.rotation.y = Math.sin(clock.t * 0.6 * k) * 1.2;
+    if (fore.current) fore.current.rotation.z = -0.9 + Math.sin(clock.t * k * 1.3) * 0.45;
+  });
+  return (
+    <group>
+      <Cyl r={0.75} h={0.14} at={[0, 0, 0]} c={C.wall} seg={32} />
+      <mesh position={[0, 0.16, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.62, 0.74, 40]} />
+        <meshStandardMaterial color="#b36ef0" emissive="#b36ef0" emissiveIntensity={0.7} />
+      </mesh>
+      <Cyl r={0.42} h={0.45} at={[0, 0.14, 0]} c={C.roofDark} seg={24} />
+      <group ref={torso} position={[0, 0.6, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.28, 0.34, 0.4, 20]} />
+          <Mat c={C.wall} />
+        </mesh>
+        {/* upper arm */}
+        <group position={[0, 0.2, 0]} rotation={[0, 0, -0.5]}>
+          <mesh position={[0.45, 0, 0]} castShadow>
+            <boxGeometry args={[0.9, 0.18, 0.18]} />
+            <Mat c={C.orange} />
+          </mesh>
+          <group ref={fore} position={[0.9, 0, 0]}>
+            <mesh position={[0.35, 0, 0]} castShadow>
+              <boxGeometry args={[0.7, 0.14, 0.14]} />
+              <Mat c={C.orange} />
+            </mesh>
+            <mesh position={[0.72, 0, 0]}>
+              <boxGeometry args={[0.12, 0.28, 0.28]} />
+              <Mat c={C.roofDark} />
+            </mesh>
+          </group>
+        </group>
+        {/* head = assistant orb */}
+        <mesh position={[0, 0.42, 0]}>
+          <sphereGeometry args={[0.2, 20, 20]} />
+          <meshStandardMaterial color="#b36ef0" emissive="#b36ef0" emissiveIntensity={1} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Forklift shuttling crates from the belt end to the trucks. */
+function Forklift({ from, to, phase, color }: { from: [number, number]; to: [number, number]; phase: number; color: string }) {
+  const g = useRef<THREE.Group>(null);
+  const crate = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    if (!g.current) return;
+    const u = (clock.t * 0.18 + phase) % 1;
+    const there = u < 0.5;
+    const k = there ? u * 2 : (1 - u) * 2; // 0..1..0
+    const e = k * k * (3 - 2 * k);
+    g.current.position.set(from[0] + (to[0] - from[0]) * e, 0, from[1] + (to[1] - from[1]) * e);
+    g.current.rotation.y = Math.atan2(to[0] - from[0], to[1] - from[1]) + (there ? 0 : Math.PI);
+    if (crate.current) crate.current.visible = there;
+  });
+  return (
+    <group ref={g}>
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <boxGeometry args={[0.55, 0.35, 0.8]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <mesh position={[0, 0.6, -0.15]}>
+        <boxGeometry args={[0.45, 0.28, 0.35]} />
+        <meshStandardMaterial color={C.glassDark} />
+      </mesh>
+      <mesh position={[0, 0.55, 0.45]}>
+        <boxGeometry args={[0.5, 0.9, 0.06]} />
+        <meshStandardMaterial color={C.roofDark} />
+      </mesh>
+      <mesh ref={crate} position={[0, 0.38, 0.72]}>
+        <boxGeometry args={[0.45, 0.4, 0.45]} />
+        <meshStandardMaterial color={LAYER_COLOR.gold} metalness={0.5} roughness={0.35} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Cube.dev — serving dock: the belt ends here, forklifts load the trucks. */
+export function LoadingDock({ w, d, entityId }: ArchetypeProps) {
+  const cube = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    if (cube.current) {
+      cube.current.rotation.y += dt * (isActive(entityId) ? 1.6 : 0.4);
+      cube.current.rotation.x = 0.6;
+    }
+  });
+  return (
+    <group>
+      {/* raised dock platform */}
+      <Block size={[w, 0.55, d]} c={C.wallShade} r={0.06} />
+      <Block size={[w * 0.55, 2.0, d * 0.4]} at={[w * 0.18, 0.55, -d * 0.28]} c={C.wall} />
+      <Panel size={[w * 0.5, 0.35, 0.05]} at={[w * 0.18, 2.0, -d * 0.08 + 0.01]} c={C.glass} />
+      <group ref={cube} position={[w * 0.18, 3.6, -d * 0.28]}>
+        <mesh>
+          <boxGeometry args={[0.9, 0.9, 0.9]} />
+          <meshStandardMaterial color="#7a5cff" emissive="#7a5cff" emissiveIntensity={0.45} transparent opacity={0.85} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[1.0, 1.0, 1.0]} />
+          <meshBasicMaterial color="#ffffff" wireframe />
+        </mesh>
+      </group>
+      {/* dock bumpers along the road side */}
+      {[-0.3, 0, 0.3].map((k) => (
+        <Panel key={k} size={[0.9, 0.35, 0.12]} at={[w * k, 0.3, d * 0.5 + 0.05]} c="#3b4157" />
+      ))}
+      {/* staged pallets */}
+      {[-0.32, -0.18].map((k, i) => (
+        <group key={k} position={[w * k, 0.55, d * 0.05]}>
+          <Block size={[0.7, 0.1, 0.6]} c={C.trunk} r={0.02} />
+          <mesh position={[0, 0.32, 0]} castShadow>
+            <boxGeometry args={[0.55, 0.44, 0.5]} />
+            <Mat c={i ? LAYER_COLOR.gold! : LAYER_COLOR.silver!} metal={0.5} rough={0.35} />
+          </mesh>
+        </group>
+      ))}
+      <group position={[0, 0.55, 0]}>
+        <Forklift from={[-w * 0.38, -d * 0.15]} to={[-w * 0.05, d * 0.38]} phase={0} color={C.yellow} />
+        <Forklift from={[-w * 0.38, -d * 0.3]} to={[w * 0.3, d * 0.38]} phase={0.5} color={C.orange} />
+      </group>
+      <Beacon at={[w * 0.42, 2.9, -d * 0.1]} entityId={entityId} color="#7a5cff" />
+    </group>
+  );
+}
+
+/** Traefik — КПП: booth on the road side, barrier across the lane. */
+export function Checkpoint({ d, entityId }: ArchetypeProps) {
+  const root = useRef<THREE.Group>(null);
+  const arm = useRef<THREE.Group>(null);
+  const light = useRef<THREE.MeshStandardMaterial>(null);
+  const probe = useRef<THREE_NS.Vector3 | null>(null);
+  useFrame((_, dt) => {
+    if (!root.current || !arm.current) return;
+    if (!probe.current) {
+      root.current.updateWorldMatrix(true, false);
+      probe.current = root.current.localToWorld(new THREE_NS.Vector3(0.75, 0, d * 0.9));
+    }
+    const p = probe.current;
+    let near = false;
+    for (const [x, z] of traffic.vehicles.values()) {
+      if (Math.hypot(x - p.x, z - p.z) < 4.2) {
+        near = true;
+        break;
+      }
+    }
+    const target = near ? -1.35 : 0;
+    arm.current.rotation.x += (target - arm.current.rotation.x) * Math.min(dt * 6, 1);
+    if (light.current) {
+      light.current.color.set(near ? C.green : C.red);
+      light.current.emissive.set(near ? C.green : C.red);
+    }
+  });
+  return (
+    <group ref={root}>
+      <Block size={[1.4, 0.12, 1.4]} c={C.wallShade} r={0.04} shadow={false} />
+      <Block size={[1.1, 1.5, 1.1]} at={[0, 0.12, 0]} c={C.wall} r={0.1} />
+      <Panel size={[0.9, 0.5, 0.05]} at={[0, 1.15, 0.56]} c={C.glass} />
+      <Panel size={[0.05, 0.5, 0.9]} at={[0.56, 1.15, 0]} c={C.glass} />
+      <Block size={[1.4, 0.16, 1.4]} at={[0, 1.62, 0]} c={C.accent} r={0.05} />
+      {/* barrier: pivot post + arm across the road (local +Z) */}
+      <group position={[0.75, 0, 0.75]}>
+        <Cyl r={0.12} h={1.0} at={[0, 0, 0]} c={C.roofDark} seg={10} />
+        <group ref={arm} position={[0, 0.85, 0]}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <mesh key={i} position={[0, 0, 0.3 + i * 0.6]}>
+              <boxGeometry args={[0.1, 0.1, 0.6]} />
+              <meshStandardMaterial color={i % 2 ? C.red : '#ffffff'} />
+            </mesh>
+          ))}
+        </group>
+      </group>
+      <group position={[-0.65, 0, 0.75]}>
+        <Cyl r={0.05} h={1.6} at={[0, 0, 0]} c={C.door} seg={6} />
+        <mesh position={[0, 1.7, 0]}>
+          <sphereGeometry args={[0.13, 12, 12]} />
+          <meshStandardMaterial ref={light} color={C.red} emissive={C.red} emissiveIntensity={0.8} />
+        </mesh>
+      </group>
+      <Beacon at={[0, 1.95, 0]} entityId={entityId} />
     </group>
   );
 }

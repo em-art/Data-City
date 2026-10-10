@@ -9,14 +9,13 @@ import { indexModel, validateModel, type ModelIndex } from '@/model/graph';
 import type { EnterpriseModelT, EntityT, ModelEventT, ProcessT } from '@/model/schema';
 import { proposalFor } from '@/sim/analysis';
 import { clock } from '@/sim/clock';
-import { compileProcess, compileTrip, type Run, type SimContext } from '@/sim/engine';
-import { buildRoadGraph } from '@/space/routing';
+import { compileProcess, compileTrip, makeContext, type Run, type SimContext } from '@/sim/engine';
 import { SpaceModel, type SpaceModelT } from '@/space/schema';
 
 export type ViewMode = 'city' | 'systems' | 'data' | 'people' | 'process' | 'metadata' | 'improve';
 export type Variant = 'asIs' | 'toBe';
 
-const STORAGE_KEY = 'data-city:workspace:v2';
+const STORAGE_KEY = 'data-city:workspace:v3';
 export const DEFAULT_PROCESS = 'proc.pattern-a';
 const MAX_LOG = 120;
 
@@ -50,7 +49,7 @@ function saveWorkspace(w: Workspace) {
 
 function derive(w: Workspace): { index: ModelIndex; ctx: SimContext } {
   const index = indexModel(w.model);
-  return { index, ctx: { index, space: w.space, graph: buildRoadGraph(w.space) } };
+  return { index, ctx: makeContext(index, w.space) };
 }
 
 function resolveProcess(index: ModelIndex, processId: string, variant: Variant): ProcessT | undefined {
@@ -141,7 +140,9 @@ export const useCity = create<CityState>((set, get) => {
       let focus = get().focus;
       if (selectedId && opts?.focus) {
         const p = get().space.placements.find((x) => x.entityId === selectedId);
-        if (p) focus = { at: p.position, seq: (focus?.seq ?? 0) + 1 };
+        const belt = get().space.belts.find((b) => b.entityId === selectedId);
+        const at = p?.position ?? belt?.nodes[Math.floor(belt.nodes.length / 2)]?.at;
+        if (at) focus = { at, seq: (focus?.seq ?? 0) + 1 };
       }
       set({ selectedId, focus });
     },

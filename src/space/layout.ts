@@ -17,14 +17,15 @@ export const DEFAULT_FOOTPRINT: Record<ArchetypeT, Vec2T> = {
   archive: [7, 5],
   tower: [5, 5],
   employeeNode: [1.6, 1.6],
-  layerHall: [8, 7],
+  robotNode: [1.8, 1.8],
+  beltStation: [4, 4],
+  loadingDock: [8, 7],
   queryHub: [9, 8],
   controlTower: [6, 6],
   silos: [10, 7],
-  switchyard: [8, 6],
   ingestDock: [8, 6],
   lab: [7, 6],
-  gatehouse: [3, 3],
+  checkpoint: [2, 4],
   vault: [5, 5],
   watchtower: [4, 4],
 };
@@ -89,6 +90,10 @@ export function autoPlace(
   const nodes = new Map(space.roads.nodes.map((n) => [n.id, n.at] as const));
   const segments = space.roads.edges.map(([a, b]) => ({ a, b, pa: nodes.get(a)!, pb: nodes.get(b)! }));
   const taken = space.placements.map((p) => boundsOf(p));
+  const beltSegs = space.belts.flatMap((b) => {
+    const bn = new Map(b.nodes.map((n) => [n.id, n.at] as const));
+    return b.edges.map(([x, y]) => [bn.get(x)!, bn.get(y)!] as const);
+  });
 
   let best: { pos: Vec2T; rotation: number; score: number; seg?: (typeof segments)[number] } | null = null;
   const { min, max } = district.rect;
@@ -96,6 +101,7 @@ export function autoPlace(
     for (let z = min[1] + footprint[1] / 2 + 0.5; z <= max[1] - footprint[1] / 2 - 0.5; z += 0.5) {
       const rect = boundsOf({ position: [x, z], footprint, rotation: 0 });
       if (taken.some((t) => overlap(rect, t, 1))) continue;
+      if (beltSegs.some(([pa, pb]) => rectToSegmentDistance(rect, pa, pb) < 1.2)) continue;
       let nearest = Infinity;
       let seg: (typeof segments)[number] | undefined;
       for (const s of segments) {

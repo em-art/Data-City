@@ -24,14 +24,15 @@ describe('enterprise model', () => {
     const space = loadDemoSpace();
     for (const p of space.placements) expect(ix.get(p.entityId), p.entityId).toBeDefined();
     for (const s of [...ix.all('system'), ...ix.all('layer')]) {
-      expect(space.placements.some((p) => p.entityId === s.id), s.id).toBe(true);
+      const placed = space.placements.some((p) => p.entityId === s.id) || space.belts.some((b) => b.entityId === s.id);
+      expect(placed, s.id).toBe(true);
     }
   });
 
   it('neighbours include both directions', () => {
     const ix = indexModel(loadDemoModel());
     const ids = ix.neighbours('sys.istok').map((e) => e.id);
-    expect(ids).toContain('con.trino-istok');
+    expect(ids).toContain('con.cube-istok');
     expect(ids).toContain('ctr.corpgov-transitions');
   });
 

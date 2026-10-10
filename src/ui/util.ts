@@ -39,6 +39,7 @@ export const ROLE_LABEL: Record<string, string> = {
   secrets: 'Секреты',
   observability: 'Наблюдаемость',
   workspace: 'Рабочие места',
+  serving: 'Выдача',
 };
 
 export const EVENT_LABEL: Record<string, string> = {

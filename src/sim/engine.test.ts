@@ -2,14 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { loadDemoModel, loadDemoSpace } from '@/data';
 import { indexModel } from '@/model/graph';
 import type { ProcessT } from '@/model/schema';
-import { buildRoadGraph } from '@/space/routing';
 import { compare, findIssues, metricsOf, processChecks, proposalFor } from './analysis';
-import { compileProcess, sampleRun, type SimContext } from './engine';
+import { compileProcess, makeContext, sampleRun, type SimContext } from './engine';
 
 const ctx = (): SimContext => {
   const index = indexModel(loadDemoModel());
   const space = loadDemoSpace();
-  return { index, space, graph: buildRoadGraph(space) };
+  return makeContext(index, space);
 };
 const proc = (c: SimContext, id: string) => c.index.get(id) as ProcessT;
 
@@ -23,10 +22,13 @@ describe('Pattern A — federated delivery', () => {
       'sys.eva>layer.bronze',
       'layer.bronze>layer.silver',
       'layer.silver>layer.gold',
-      'layer.gold>sys.nessie',
-      'sys.nessie>sys.istok',
+      'layer.gold>sys.cube',
+      'sys.cube>sys.istok',
       'sys.istok>sys.bi',
     ]);
+    // inside the platform cargo rides the Nessie belt; trucks take over at Cube.dev
+    const modes = run.phases.filter((p) => p.kind === 'travel').map((p) => p.transport);
+    expect(modes).toEqual(['pipe', 'belt', 'belt', 'belt', 'truck', 'truck']);
     expect(run.contractId).toBe('ctr.corpgov-transitions');
   });
 
@@ -37,7 +39,7 @@ describe('Pattern A — federated delivery', () => {
     const first = run.phases.find((p) => p.kind === 'travel')!;
     expect(first.transport).toBe('pipe');
     const s = sampleRun(run, (first.t0 + first.t1) / 2, c);
-    expect(s.vehicle?.pipe).toBe(true);
+    expect(s.vehicle?.mode).toBe('pipe');
   });
 
   it('emits produced → contract checked → delivered and stays on the allowed route', () => {
@@ -68,7 +70,7 @@ describe('Pattern B — dlt ingestion', () => {
     const run = compileProcess(proc(c, 'proc.pattern-b'), c, { runId: 'b' });
     const travels = run.phases.filter((p) => p.kind === 'travel');
     expect(travels.map((p) => p.toId)).toEqual(['sys.dlt', 'layer.landing', 'layer.bronze', 'layer.silver']);
-    expect(travels.every((p) => p.transport !== 'pipe')).toBe(true);
+    expect(travels.map((p) => p.transport)).toEqual(['truck', 'truck', 'belt', 'belt']);
   });
 });
 

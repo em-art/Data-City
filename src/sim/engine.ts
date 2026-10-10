@@ -9,10 +9,11 @@
  */
 import type { ModelIndex } from '@/model/graph';
 import type { ContractT, ModelEventT, ProcessT } from '@/model/schema';
-import { pathLength, samplePath, shortestPath, type RoadGraph } from '@/space/routing';
+import { buildBeltGraph, buildRoadGraph, pathLength, samplePath, shortestPath, type RoadGraph } from '@/space/routing';
 import type { SpaceModelT, Vec2T } from '@/space/schema';
 
 export type PhaseKind = 'work' | 'travel' | 'manual';
+export type Transport = 'truck' | 'pipe' | 'belt';
 
 export interface Phase {
   kind: PhaseKind;
@@ -26,8 +27,8 @@ export interface Phase {
   cargoId?: string;
   /** For travel: the delivery leaves the contract's allowed route. */
   routeViolation?: boolean;
-  /** For travel: copied by truck, or read in place (federated, Pattern A). */
-  transport?: 'truck' | 'pipe';
+  /** For travel: truck on roads, federated read in place (pipe), or Nessie belt. */
+  transport?: Transport;
   /** Systems taking part in a work step without the cargo moving there. */
   via?: string[];
   flow?: string;
@@ -48,6 +49,11 @@ export interface SimContext {
   index: ModelIndex;
   space: SpaceModelT;
   graph: RoadGraph;
+  belt: RoadGraph;
+}
+
+export function makeContext(index: ModelIndex, space: SpaceModelT): SimContext {
+  return { index, space, graph: buildRoadGraph(space), belt: buildBeltGraph(space) };
 }
 
 export interface CompileOptions {
@@ -60,6 +66,37 @@ export interface CompileOptions {
 
 export function portOf(ctx: SimContext, entityId: string): string | undefined {
   return ctx.space.placements.find((p) => p.entityId === entityId)?.port;
+}
+
+export function beltNodeOf(ctx: SimContext, entityId: string): string | undefined {
+  return ctx.space.placements.find((p) => p.entityId === entityId)?.beltNode;
+}
+
+/** Where cargo waits at an object: on its belt node, else at its road port. */
+export function restPoint(ctx: SimContext, entityId: string, prefer: Transport = 'truck'): { at: Vec2T; mode: Transport } | undefined {
+  const b = beltNodeOf(ctx, entityId);
+  const p = portOf(ctx, entityId);
+  if (b && (prefer === 'belt' || !p)) return { at: ctx.belt.nodes.get(b)!, mode: 'belt' };
+  if (p) return { at: ctx.graph.nodes.get(p)!, mode: 'truck' };
+  if (b) return { at: ctx.belt.nodes.get(b)!, mode: 'belt' };
+  return undefined;
+}
+
+/** Plan a leg between two objects: along the belt when both sit on it, else by road. */
+function planLeg(ctx: SimContext, fromId: string, toId: string, want: 'truck' | 'pipe'): { path: Vec2T[]; transport: Transport } | null {
+  const fb = beltNodeOf(ctx, fromId);
+  const tb = beltNodeOf(ctx, toId);
+  if (want !== 'pipe' && fb && tb) {
+    const path = shortestPath(ctx.belt, fb, tb);
+    if (path) return { path, transport: 'belt' };
+  }
+  const fp = portOf(ctx, fromId);
+  const tp = portOf(ctx, toId);
+  if (fp && tp) {
+    const path = shortestPath(ctx.graph, fp, tp);
+    if (path) return { path, transport: want };
+  }
+  return null;
 }
 
 export function contractFor(ctx: SimContext, productId: string | undefined): ContractT | undefined {
@@ -93,15 +130,15 @@ export function compileProcess(process: ProcessT, ctx: SimContext, opts: Compile
 
   for (const step of process.steps) {
     const actor = ctx.index.get(step.actorId);
-    const actorPort = portOf(ctx, step.actorId);
-    const isPlace = !!actorPort && actor?.kind !== 'employee';
+    const isPlace = actor?.kind !== 'employee' && !!(portOf(ctx, step.actorId) || beltNodeOf(ctx, step.actorId));
+    const leg = isPlace && here && here !== step.actorId ? planLeg(ctx, here, step.actorId, step.transport) : null;
 
-    if (isPlace && here && here !== step.actorId) {
-      const from = portOf(ctx, here)!;
-      const path = shortestPath(ctx.graph, from, actorPort) ?? [];
-      const dur = Math.max(pathLength(path) / speed, 0.5);
+    if (leg && here) {
+      const path = leg.path;
+      // belts are slower and steadier than trucks
+      const dur = Math.max(pathLength(path) / (leg.transport === 'belt' ? speed * 0.55 : speed), 0.5);
       const routeViolation = !!contract && !contract.allowedRoute.includes(step.actorId);
-      phases.push({ kind: 'travel', t0: t, t1: t + dur, actorId: here, toId: step.actorId, path, cargoId: cargo, routeViolation, transport: step.transport });
+      phases.push({ kind: 'travel', t0: t, t1: t + dur, actorId: here, toId: step.actorId, path, cargoId: cargo, routeViolation, transport: leg.transport });
       emit(t, 'product.dispatched', cargo ?? here, { payload: { fromId: here, toId: step.actorId, routeViolation } });
       t += dur;
     }
@@ -163,8 +200,11 @@ export function compileTrip(
 
 export interface RunSample {
   phase: Phase | undefined;
-  /** Vehicle pose; null when the run has not started or has finished. */
-  vehicle: { at: Vec2T; heading: number; moving: boolean; cargoId?: string; pipe?: boolean } | null;
+  /**
+   * Cargo pose; null when the run has not started or has finished.
+   * `mode` says how it is shown: truck on a road, pulse (federated read) or crate on the belt.
+   */
+  vehicle: { at: Vec2T; heading: number; moving: boolean; cargoId?: string; mode: Transport } | null;
   progress: number; // 0..1 over the whole run
 }
 
@@ -178,23 +218,20 @@ export function sampleRun(run: Run, t: number, ctx: SimContext): RunSample {
   if (phase.kind === 'travel' && phase.path) {
     const u = (t - phase.t0) / Math.max(phase.t1 - phase.t0, 1e-6);
     const s = samplePath(phase.path, u);
-    return { phase, vehicle: { ...s, moving: true, cargoId: phase.cargoId, pipe: phase.transport === 'pipe' }, progress };
+    return { phase, vehicle: { ...s, moving: true, cargoId: phase.cargoId, mode: phase.transport ?? 'truck' }, progress };
   }
-  // Parked: at the last place-like object (the vehicle waits during manual steps).
-  let parkedAt: string | undefined;
+  // Waiting at the last place-like object (also during manual steps).
+  const prevTravel = run.phases
+    .slice(0, i)
+    .reverse()
+    .find((p) => p.kind === 'travel');
   for (let k = i; k >= 0; k--) {
     const p = run.phases[k]!;
     const id = p.kind === 'travel' ? p.toId : p.actorId;
-    if (id && portOf(ctx, id)) {
-      parkedAt = id;
-      break;
-    }
+    const rest = id ? restPoint(ctx, id, prevTravel?.transport === 'truck' || !prevTravel ? 'truck' : 'belt') : undefined;
+    if (!rest) continue;
+    const heading = prevTravel?.path ? samplePath(prevTravel.path, 1).heading : 0;
+    return { phase, vehicle: { at: rest.at, heading, moving: false, cargoId: phase.cargoId, mode: rest.mode }, progress };
   }
-  const port = parkedAt ? portOf(ctx, parkedAt) : undefined;
-  const at = port ? ctx.graph.nodes.get(port) : undefined;
-  if (!at) return { phase, vehicle: null, progress };
-  // Face along the previous travel leg, if any.
-  const prevTravel = [...run.phases.slice(0, i)].reverse().find((p) => p.kind === 'travel');
-  const heading = prevTravel?.path ? samplePath(prevTravel.path, 1).heading : 0;
-  return { phase, vehicle: { at, heading, moving: false, cargoId: phase.cargoId }, progress };
+  return { phase, vehicle: null, progress };
 }

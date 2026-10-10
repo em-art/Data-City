@@ -24,7 +24,13 @@ type V3 = [number, number, number];
 
 function anchor(space: SpaceModelT, id: string, k = 0.7): V3 | null {
   const p = space.placements.find((x) => x.entityId === id);
-  if (!p) return null;
+  if (!p) {
+    // an entity drawn as a belt (Nessie): anchor at the middle of its main line
+    const belt = space.belts.find((b) => b.entityId === id);
+    const main = belt?.loops[0];
+    const mid = main && belt.nodes.find((n) => n.id === main[Math.floor(main.length / 2)]);
+    return mid ? [mid.at[0], 1.2, mid.at[1]] : null;
+  }
   return [p.position[0], CATALOG[p.archetype].labelHeight * k, p.position[1]];
 }
 
